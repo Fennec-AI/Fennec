@@ -28,6 +28,8 @@ class FennecConfig(BaseSettings):
     # LLM Configuration
     llm_provider: Literal["anthropic", "openai", "openrouter"] = "anthropic"
     llm_model: str = "claude-sonnet-4-6"
+    # None preserves LangChain's automatic selection; gateways can opt in/out.
+    llm_use_responses_api: Optional[bool] = None
     openrouter_api_key: Optional[str] = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
@@ -194,6 +196,7 @@ def get_default_llm():
             model=config.llm_model,
             api_key=config.openrouter_api_key,
             base_url=config.openrouter_base_url,
+            use_responses_api=config.llm_use_responses_api,
             temperature=config.llm_temperature,
             max_tokens=config.llm_max_tokens,
             timeout=config.llm_timeout,
@@ -208,6 +211,7 @@ def get_default_llm():
         _llm_instance = ChatOpenAI(
             model=config.llm_model,
             api_key=config.openai_api_key,
+            use_responses_api=config.llm_use_responses_api,
             temperature=config.llm_temperature,
             max_tokens=config.llm_max_tokens,
             timeout=config.llm_timeout,
@@ -240,6 +244,7 @@ def create_llm(model: str):
             model=model,
             api_key=config.openrouter_api_key,
             base_url=config.openrouter_base_url,
+            use_responses_api=config.llm_use_responses_api,
             temperature=config.llm_temperature,
             max_tokens=config.llm_max_tokens,
             timeout=config.llm_timeout,
@@ -254,6 +259,7 @@ def create_llm(model: str):
         return ChatOpenAI(
             model=model,
             api_key=config.openai_api_key,
+            use_responses_api=config.llm_use_responses_api,
             temperature=config.llm_temperature,
             max_tokens=config.llm_max_tokens,
             timeout=config.llm_timeout,

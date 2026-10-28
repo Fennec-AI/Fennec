@@ -223,6 +223,7 @@ Everything is `.env`-driven. The knobs that matter:
 |---|---|
 | `LLM_PROVIDER` | `anthropic` (default), `openai`, or `openrouter` |
 | `LLM_MODEL` | Model name for the provider (default `claude-sonnet-4-6`) |
+| `FENNEC_LLM_USE_RESPONSES_API` | Optional for `openai` / `openrouter`: `true` selects Responses, `false` selects Chat Completions. Unset preserves LangChain's automatic selection. Applies to default and per-agent models; the configured endpoint must support the selected API. |
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` | One must be set, matching `LLM_PROVIDER` |
 | `DOCKER_IMAGE` | Kali image tag (default `fennec-linux`, built by `linux/Makefile`) |
 | `EXECUTION_MODE` | `docker` (default — spawn a Kali sibling per scan) or `local` (run tools in the agent container directly) |

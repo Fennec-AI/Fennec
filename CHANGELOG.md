@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Optional `FENNEC_LLM_USE_RESPONSES_API` setting for OpenAI-compatible model factories, preserving automatic API selection when unset.
+
 ## [0.2.0] - 2026-06-30
 
 ### Added

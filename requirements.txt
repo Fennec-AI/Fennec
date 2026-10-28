@@ -3,7 +3,7 @@ langgraph>=0.2.60
 langchain>=0.3.0
 langchain-core>=0.3.0
 langchain-anthropic>=0.2.0
-langchain-openai>=0.2.0
+langchain-openai>=0.3.9
 
 # API Framework
 fastapi>=0.115.0
