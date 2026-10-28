@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Prefer Go security tools in the Kali image's PATH so Python's unrelated `httpx` console script cannot shadow ProjectDiscovery's `httpx`.
+
 ## [0.2.0] - 2026-06-30
 
 ### Added

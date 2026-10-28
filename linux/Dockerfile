@@ -58,7 +58,8 @@ RUN setcap -r /usr/lib/nmap/nmap 2>/dev/null || true
 
 # Go-based tools (ProjectDiscovery suite + ffuf + gospider)
 ENV GOPATH=/root/go
-ENV PATH="${PATH}:/root/go/bin"
+# Prefer ProjectDiscovery's httpx over Python's unrelated httpx console script.
+ENV PATH="/root/go/bin:${PATH}"
 RUN go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest && \
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
     go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
