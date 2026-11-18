@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Finding } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { severityClass } from './severity';
 
 function Block({ title, value }: { title: string; value?: string | null }) {
   return value ? <section className="space-y-2"><h3 className="text-sm font-semibold text-fennec-dark-200">{title}</h3><pre className="whitespace-pre-wrap break-words text-sm text-fennec-dark-300">{value}</pre></section> : null;
@@ -11,7 +12,8 @@ export default function FindingDetail({ finding: f }: { finding: Finding }) {
     <div className="mb-5 space-y-2">
       <h2 className="text-xl font-semibold text-fennec-dark-100">{f.title}</h2>
       <div className="flex flex-wrap gap-2 text-xs text-fennec-dark-300">
-        {[f.severity, f.host, f.location, f.parameter && `Parâmetro: ${f.parameter}`, f.cwe_id, f.owasp_category].filter(Boolean).map((x, i) => <span key={i} className="rounded border border-fennec-dark-700 px-2 py-1">{x}</span>)}
+        <span className={`rounded border px-2 py-1 font-semibold uppercase ${severityClass(f.severity)}`}>{f.severity}</span>
+        {[f.host, f.location, f.parameter && `Parâmetro: ${f.parameter}`, f.cwe_id, f.owasp_category].filter(Boolean).map((x, i) => <span key={i} className="rounded border border-fennec-dark-700 px-2 py-1">{x}</span>)}
       </div>
       <Link className="text-sm text-fennec-purple-400 hover:underline" to={`/dashboard/status/${f.job_id}`}>Ver scan: {f.job_name}</Link>
     </div>

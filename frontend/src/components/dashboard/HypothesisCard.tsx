@@ -55,7 +55,7 @@ export function HypothesisCard({
     critical: 'bg-red-600/20 text-red-400 border-red-600/30',
     high: 'bg-orange-600/20 text-orange-400 border-orange-600/30',
     medium: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30',
-    low: 'bg-blue-600/20 text-blue-400 border-blue-600/30',
+    low: 'bg-green-600/20 text-green-400 border-green-600/30',
     info: 'bg-fennec-dark-600 text-fennec-dark-300 border-fennec-dark-600/30',
   };
 

@@ -1,4 +1,5 @@
 import type { FindingFacets } from '@/types';
+import { severityClass } from './severity';
 
 interface Props {
   facets: FindingFacets;
@@ -24,7 +25,7 @@ export default function FindingsFilters({ facets, values, update }: Props) {
     </div>
     <div className="flex flex-wrap gap-2">
       <button className={`${selectClass} ${!values.severity ? 'border-fennec-purple-500' : ''}`} onClick={() => update('severity', '')}>Todas</button>
-      {facets.severities.map(x => <button key={x.value} className={`${selectClass} capitalize ${values.severity === x.value ? 'border-fennec-purple-500' : ''}`} onClick={() => update('severity', x.value)}>{x.value} ({x.count})</button>)}
+      {facets.severities.map(x => <button key={x.value} className={`rounded border px-3 py-2 text-sm capitalize ${severityClass(x.value)} ${values.severity === x.value ? 'ring-2 ring-white/50' : ''}`} onClick={() => update('severity', x.value)}>{x.value} ({x.count})</button>)}
     </div>
   </div>;
 }

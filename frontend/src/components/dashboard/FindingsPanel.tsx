@@ -38,10 +38,10 @@ const severityColors: Record<Severity, { bg: string; text: string; border: strin
     badgeBg: 'bg-yellow-600/30',
   },
   low: {
-    bg: 'bg-blue-600/20',
-    text: 'text-blue-400',
-    border: 'border-blue-600/30',
-    badgeBg: 'bg-blue-600/30',
+    bg: 'bg-green-600/20',
+    text: 'text-green-400',
+    border: 'border-green-600/30',
+    badgeBg: 'bg-green-600/30',
   },
   info: {
     bg: 'bg-fennec-dark-600/50',

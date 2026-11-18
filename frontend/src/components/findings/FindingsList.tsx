@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Finding } from '@/types';
+import { severityClass } from './severity';
 
 const rank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
 
@@ -16,7 +17,7 @@ export default function FindingsList({ findings, selectedId, onSelect }: Props) 
     {groups.map(group => <div key={group}>
       {grouped && <h3 className="px-4 py-2 text-xs font-semibold text-fennec-dark-400">{group}</h3>}
       {ordered.filter(f => !grouped || f.host === group).map(f => <button key={f.id} onClick={() => onSelect(f.id)} className={`w-full border-b border-fennec-dark-800 p-4 text-left hover:bg-fennec-dark-800 ${selectedId === f.id ? 'bg-fennec-dark-800' : ''}`}>
-        <span className="text-xs font-bold uppercase text-fennec-purple-400">{f.severity}</span>
+        <span className={`inline-flex rounded border px-2 py-0.5 text-xs font-bold uppercase ${severityClass(f.severity)}`}>{f.severity}</span>
         <span className="mt-1 block text-sm font-medium text-fennec-dark-100">{f.title}</span>
         <span className="mt-1 block truncate text-xs text-fennec-dark-400">{f.host} · {f.location}</span>
         <span className="mt-1 block text-xs text-fennec-dark-500">{new Date(f.discovered_at).toLocaleDateString()}</span>

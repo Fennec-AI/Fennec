@@ -64,7 +64,7 @@ export function getSeverityColor(severity: Severity): string {
     critical: 'text-fennec-red-400',
     high: 'text-fennec-orange-400',
     medium: 'text-fennec-yellow-400',
-    low: 'text-fennec-blue-400',
+    low: 'text-green-400',
     info: 'text-fennec-dark-300',
   };
   return colors[severity] || colors.info;
@@ -76,7 +76,7 @@ export function getSeverityBgColor(severity: Severity): string {
     critical: 'bg-fennec-red-600/20',
     high: 'bg-fennec-orange-600/20',
     medium: 'bg-fennec-yellow-600/20',
-    low: 'bg-fennec-blue-600/20',
+    low: 'bg-green-600/20',
     info: 'bg-fennec-dark-600/20',
   };
   return colors[severity] || colors.info;
@@ -140,7 +140,7 @@ export const CHART_COLORS = {
   critical: '#ef4444',
   high: '#f97316',
   medium: '#eab308',
-  low: '#3b82f6',
+  low: '#22c55e',
   info: '#6b7280',
   safe: '#22c55e',
 };

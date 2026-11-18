@@ -21,7 +21,7 @@
   --color-severity-critical: #ef4444;
   --color-severity-high: #f97316;
   --color-severity-medium: #eab308;
-  --color-severity-low: #3b82f6;
+  --color-severity-low: #22c55e;
 
   --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
@@ -102,7 +102,7 @@ body {
     }
 
     .severity-low {
-        @apply bg-fennec-blue-50 text-fennec-blue-700 border border-fennec-blue-200;
+        @apply bg-green-50 text-green-700 border border-green-200;
     }
 
     .severity-info {
