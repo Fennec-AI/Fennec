@@ -115,9 +115,9 @@ def _finding(
         "parameter": parameter,
         "evidence": evidence,
         "reproduction_steps": reproduction_steps or [
-            "Send the request shown in 'evidence' against the target.",
-            "Observe the response — the highlighted field confirms exploitability.",
-            "Replay with different inputs to verify the boundary.",
+            f"Acesse o alvo {location} em um ambiente autorizado e prepare a requisição mostrada na aba Evidência.",
+            "Envie a mesma requisição com o valor registrado na evidência. Mantenha método, caminho, cabeçalhos e autenticação iguais aos do teste original.",
+            "Confira a resposta e compare com o comportamento descrito na aba Evidência. A diferença observada é o que confirma esta falha.",
         ],
         "vulnerability_type": vuln_type,
         "cwe_id": cwe,
@@ -500,9 +500,10 @@ def seed_demo() -> None:
             hypothesis_id="H1",
             days_ago=0.05,
             reproduction_steps=[
-                "POST a login request with email payload: a' UNION SELECT id,email,password_hash,role FROM users LIMIT 5--",
-                "Observe HTTP 200 — the response body's `_debug_result` array contains the exfiltrated rows.",
-                "Replay with the table-of-interest swapped in (sessions, api_keys, billing_accounts) to confirm full read access.",
+                "Acesse o endpoint POST /api/auth/login no ambiente de demonstração e prepare uma requisição de login com o campo email no corpo JSON.",
+                "Envie a requisição colocando no campo email o payload registrado: a' UNION SELECT id,email,password_hash,role FROM users LIMIT 5--. Use os demais campos como na requisição exibida na aba Evidência.",
+                "Confira se a resposta retorna HTTP 200 e se o array `_debug_result` contém linhas da tabela users, como no par de request/response registrado.",
+                "Repita o login com um email comum, sem o payload, e compare as respostas. O array de linhas não deve aparecer na requisição normal.",
             ],
         ),
         _finding(

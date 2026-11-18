@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multiple providers at once: `LLM_FALLBACKS` chain used when the primary model errors, and `provider:model` specs for per-agent overrides
 
 ### Changed
+- Reproduction guidance now asks for clear Portuguese action steps grounded in recorded evidence; the detail tab shows prerequisites, numbered actions, and the confirming result.
 - All LLM construction goes through `src.config.settings.create_llm` (the CLI no longer builds its own clients)
 
 ## [0.2.0] - 2026-06-30
