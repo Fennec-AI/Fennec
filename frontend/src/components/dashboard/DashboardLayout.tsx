@@ -5,17 +5,20 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
 interface DashboardLayoutProps {
     children: ReactNode;
+    fitViewport?: boolean;
     onRefresh?: () => void;
     isRefreshing?: boolean;
 }
 
 export default function DashboardLayout({
                                             children,
+                                            fitViewport = false,
                                             onRefresh,
                                             isRefreshing,
                                         }: DashboardLayoutProps) {
     return (
         <SidebarProvider
+            className={fitViewport ? "h-dvh min-h-0 overflow-hidden" : undefined}
             style={
                 {
                     '--sidebar-width': '18rem',
@@ -32,10 +35,10 @@ export default function DashboardLayout({
               slides under the fixed sidebar. Reported as the "sidebar
               randomly takes off" flake.
             */}
-            <SidebarInset className="min-w-0 overflow-x-hidden">
+            <SidebarInset className={`min-w-0 overflow-x-hidden ${fitViewport ? "min-h-0 overflow-y-hidden" : ""}`}>
                 <SiteHeader onRefresh={onRefresh} isRefreshing={isRefreshing} />
-                <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
                         {children}
                     </div>
                 </div>

@@ -56,12 +56,12 @@ export default function FindingsPage() {
     return !['resolved', 'fixed', 'archived', 'dismissed'].includes(value);
   });
   const visibleSelected = visible.find(f => f.id === selectedId) || visible[0];
-  return <DashboardLayout>
-    <div className="flex min-h-[75vh] flex-col bg-fennec-dark-950">
-      <div className="border-b border-fennec-dark-700 p-4"><h1 className="text-xl font-semibold text-fennec-dark-100">Falhas</h1><p className="text-sm text-fennec-dark-400">{visible.length} falha(s) encontradas</p></div>
+  return <DashboardLayout fitViewport>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      <div className="shrink-0 border-b border-border p-4"><h1 className="text-xl font-semibold text-foreground">Falhas</h1><p className="text-sm text-muted-foreground">{visible.length} falha(s) encontradas</p></div>
       <FindingsFilters facets={facets} values={filters} update={update} />
-      <div className="flex gap-2 border-b border-fennec-dark-700 px-4 py-2">{(['open', 'resolved', 'archived'] as const).map(tab => <button key={tab} className={`rounded px-3 py-1 text-sm capitalize ${status === tab ? 'bg-fennec-dark-700 text-fennec-dark-100' : 'text-fennec-dark-400'}`} onClick={() => update('status', tab === 'open' ? '' : tab)}>{tab}</button>)}</div>
-      {loading ? <p className="p-6 text-sm text-fennec-dark-400">Carregando falhas…</p> : error ? <div className="p-6 text-sm text-red-400">{error}<button className="ml-3 underline" onClick={() => window.location.reload()}>Tentar novamente</button></div> : !visible.length ? <div className="p-6 text-sm text-fennec-dark-400">{hasFilters || status !== 'open' ? 'Nenhuma falha com esses filtros.' : 'Nenhuma falha ainda.'}{(hasFilters || status !== 'open') && <button className="ml-3 text-fennec-purple-400 underline" onClick={() => setParams({})}>Limpar filtros</button>}</div> : <div className="flex min-h-[600px] flex-1 flex-col md:flex-row">
+      <div className="flex shrink-0 gap-2 border-b border-border px-4 py-2">{(['open', 'resolved', 'archived'] as const).map(tab => <button key={tab} className={`rounded px-3 py-1 text-sm capitalize ${status === tab ? 'bg-muted text-foreground' : 'text-muted-foreground'}`} onClick={() => update('status', tab === 'open' ? '' : tab)}>{tab}</button>)}</div>
+      {loading ? <p className="p-6 text-sm text-muted-foreground">Carregando falhas…</p> : error ? <div className="p-6 text-sm text-red-400">{error}<button className="ml-3 underline" onClick={() => window.location.reload()}>Tentar novamente</button></div> : !visible.length ? <div className="p-6 text-sm text-muted-foreground">{hasFilters || status !== 'open' ? 'Nenhuma falha com esses filtros.' : 'Nenhuma falha ainda.'}{(hasFilters || status !== 'open') && <button className="ml-3 text-fennec-purple-400 underline" onClick={() => setParams({})}>Limpar filtros</button>}</div> : <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
         <FindingsList findings={visible} selectedId={visibleSelected?.id || null} onSelect={setSelectedId} />
         {visibleSelected && <><FindingDetail finding={visibleSelected} /><FindingChat key={visibleSelected.id} findingId={visibleSelected.id} /></>}
       </div>}
