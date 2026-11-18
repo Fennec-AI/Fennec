@@ -252,6 +252,7 @@ export interface StartTestRequest {
   credential_id?: string;
   method?: 'turbo' | 'balanced' | 'deep';
   frequency?: 'daily' | 'weekly' | 'monthly' | null;
+  timeout_seconds?: number;
 }
 
 export interface JobResponse {

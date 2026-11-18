@@ -5,6 +5,7 @@ import FindingsFilters from '@/components/findings/FindingsFilters';
 import FindingsList from '@/components/findings/FindingsList';
 import FindingDetail from '@/components/findings/FindingDetail';
 import FindingChat from '@/components/findings/FindingChat';
+import { TestDialog } from '@/components/dashboard/TestDialogBox';
 import { findingsApi } from '@/services/api';
 import type { Finding, FindingFacets } from '@/types';
 
@@ -18,6 +19,8 @@ export default function FindingsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryJobId, setRetryJobId] = useState<string | null>(null);
+  const [retryOpen, setRetryOpen] = useState(false);
   const filters = useMemo(() => Object.fromEntries(filterKeys.map(k => [k, params.get(k) || ''])), [params]);
   const query = params.toString();
 
@@ -63,8 +66,12 @@ export default function FindingsPage() {
       <div className="flex shrink-0 gap-2 border-b border-border px-4 py-2">{(['open', 'resolved', 'archived'] as const).map(tab => <button key={tab} className={`rounded px-3 py-1 text-sm capitalize ${status === tab ? 'bg-muted text-foreground' : 'text-muted-foreground'}`} onClick={() => update('status', tab === 'open' ? '' : tab)}>{tab}</button>)}</div>
       {loading ? <p className="p-6 text-sm text-muted-foreground">Carregando falhas…</p> : error ? <div className="p-6 text-sm text-red-400">{error}<button className="ml-3 underline" onClick={() => window.location.reload()}>Tentar novamente</button></div> : !visible.length ? <div className="p-6 text-sm text-muted-foreground">{hasFilters || status !== 'open' ? 'Nenhuma falha com esses filtros.' : 'Nenhuma falha ainda.'}{(hasFilters || status !== 'open') && <button className="ml-3 text-fennec-purple-400 underline" onClick={() => setParams({})}>Limpar filtros</button>}</div> : <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
         <FindingsList findings={visible} selectedId={visibleSelected?.id || null} onSelect={setSelectedId} />
-        {visibleSelected && <><FindingDetail finding={visibleSelected} /><FindingChat key={visibleSelected.id} findingId={visibleSelected.id} /></>}
+        {visibleSelected && <><FindingDetail finding={visibleSelected} onRetry={() => {
+          setRetryJobId(visibleSelected.job_id);
+          setRetryOpen(true);
+        }} /><FindingChat key={visibleSelected.id} findingId={visibleSelected.id} /></>}
       </div>}
+      <TestDialog open={retryOpen} onOpenChange={setRetryOpen} prefillJobId={retryJobId} />
     </div>
   </DashboardLayout>;
 }

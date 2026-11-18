@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useMemo, useEffect, useRef } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ExternalLink,
@@ -29,6 +29,7 @@ import {
   ReconPanel,
 } from '@/components/panels';
 import { AssessmentPhasesBar } from '@/components/dashboard/AssessmentPhasesBar';
+import { TestDialog } from '@/components/dashboard/TestDialogBox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -107,6 +108,7 @@ function determinePhase(
 
 export default function AssessmentDetailPage() {
   const { testId } = useParams<{ testId: string }>();
+  const [retryOpen, setRetryOpen] = useState(false);
   const navigate = useNavigate();
   const toolCallsEndRef = useRef<HTMLDivElement>(null);
 
@@ -325,25 +327,30 @@ export default function AssessmentDetailPage() {
                 {isActiveStream && <LiveIndicator />}
               </div>
             </div>
-            {isRunning && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={async () => {
-                  try {
-                    const { dashboardApi } = await import('@/services/api');
-                    await dashboardApi.cancelJob(testId!);
-                    window.location.reload();
-                  } catch {
-                    // silently ignore
-                  }
-                }}
-              >
-                <XCircle className="mr-1.5 h-3.5 w-3.5" />
-                Cancel
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setRetryOpen(true)}>
+                Refazer
               </Button>
-            )}
+              {isRunning && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={async () => {
+                    try {
+                      const { dashboardApi } = await import('@/services/api');
+                      await dashboardApi.cancelJob(testId!);
+                      window.location.reload();
+                    } catch {
+                      // silently ignore
+                    }
+                  }}
+                >
+                  <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                  Cancel
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -518,6 +525,7 @@ export default function AssessmentDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+      <TestDialog open={retryOpen} onOpenChange={setRetryOpen} prefillJobId={testId} />
     </DashboardLayout>
   );
 }

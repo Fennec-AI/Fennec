@@ -7,7 +7,7 @@ function Block({ title, value }: { title: string; value?: string | null }) {
   return value ? <section className="space-y-2"><h3 className="text-sm font-semibold text-foreground">{title}</h3><pre className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{value}</pre></section> : null;
 }
 
-export default function FindingDetail({ finding: f }: { finding: Finding }) {
+export default function FindingDetail({ finding: f, onRetry }: { finding: Finding; onRetry: () => void }) {
   return <div className="min-h-0 min-w-0 shrink-0 p-5 md:flex-1 md:overflow-y-auto">
     <div className="mb-5 space-y-2">
       <h2 className="text-[15px] font-semibold leading-5 tracking-[0.01em] text-foreground">{f.title}</h2>
@@ -15,7 +15,10 @@ export default function FindingDetail({ finding: f }: { finding: Finding }) {
         <span className={`rounded border px-2 py-1 font-semibold uppercase ${severityClass(f.severity)}`}>{f.severity}</span>
         {[f.host, f.location, f.parameter && `Parâmetro: ${f.parameter}`, f.cwe_id, f.owasp_category].filter(Boolean).map((x, i) => <span key={i} className="rounded border border-border px-2 py-1">{x}</span>)}
       </div>
-      <Link className="font-mono text-[11px] text-ds-fg-muted hover:text-ds-fg hover:underline" to={`/dashboard/status/${f.job_id}`}>Ver scan: {f.job_name}</Link>
+      <div className="flex flex-wrap items-center gap-3">
+        <Link className="font-mono text-[11px] text-ds-fg-muted hover:text-ds-fg hover:underline" to={`/dashboard/status/${f.job_id}`}>Ver scan: {f.job_name}</Link>
+        <button type="button" onClick={onRetry} className="rounded border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted">Refazer</button>
+      </div>
     </div>
     <Tabs defaultValue="description" key={f.id}>
       <TabsList className="h-auto flex-wrap">

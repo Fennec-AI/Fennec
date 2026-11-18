@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Finding chat history now persists in a local SQLite database and reloads from the server; existing browser history is imported once.
 
 ### Added
+- **Refazer** on finding and scan details opens Create prefilled with the original scan settings.
 - Findings filters by site, scan, severity, and search; complete per-finding evidence and reproduction details; read-only AI chat about the selected finding
 - Finding detail and facet API endpoints, plus a stateless per-finding chat endpoint
 - Google Gemini as an LLM provider: `LLM_PROVIDER=gemini` with `GEMINI_API_KEY` (or `GOOGLE_API_KEY`), via `langchain-google-genai`; `LLM_MODEL` defaults per provider when unset

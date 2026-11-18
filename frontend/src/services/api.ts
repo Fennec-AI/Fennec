@@ -117,11 +117,15 @@ export const dashboardApi = {
 
 // Pentest API
 export const pentestApi = {
+  getJob: (jobId: string) =>
+    fetchApi<JobResponse>(`/jobs/${encodeURIComponent(jobId)}`),
+
   startTest: (request: StartTestRequest): Promise<JobResponse> =>
     fetchApi<JobResponse>('/jobs', {
       method: 'POST',
       body: JSON.stringify({
         name: request.name ?? `Assessment – ${request.target_url}`,
+        description: request.description,
         target_url: request.target_url,
         mode: request.mode ?? 'black_box',
         htli: request.htli ?? false,
@@ -129,6 +133,7 @@ export const pentestApi = {
         credential_id: request.credential_id,
         method: request.method ?? 'balanced',
         frequency: request.frequency ?? undefined,
+        timeout_seconds: request.timeout_seconds ?? 600,
       }),
     }),
 
