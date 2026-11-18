@@ -92,6 +92,27 @@ else:
 
 
 @app.on_event("startup")
+async def restore_dashboard_state():
+    from .persistence import load_state
+    load_state()
+
+
+@app.middleware("http")
+async def persist_dashboard_changes(request, call_next):
+    response = await call_next(request)
+    if request.method in {"POST", "PATCH", "PUT", "DELETE"} and response.status_code < 400:
+        from .persistence import save_state
+        save_state()
+    return response
+
+
+@app.on_event("shutdown")
+async def persist_dashboard_on_shutdown():
+    from .persistence import save_state
+    save_state()
+
+
+@app.on_event("startup")
 async def _maybe_seed_demo() -> None:
     """Populate the in-memory store with realistic synthetic data if
     FENNEC_DEMO_SEED is set. Useful for previewing the dashboard
