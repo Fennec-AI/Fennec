@@ -28,10 +28,12 @@ try:
     from ..middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from ..middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from ..middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
+    from ..config.settings import fallback_middleware, with_max_tokens
 except ImportError:
     from src.middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from src.middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from src.middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
+    from src.config.settings import fallback_middleware, with_max_tokens
 
 try:
     from ..state import FennecState, ReconData, CorrelationStore
@@ -448,10 +450,7 @@ async def analyst_node(
     # run after recon. Same root cause as recon/pentester extraction
     # truncation. model_copy mutates the underlying field so it persists
     # through ToolStrategy's tool re-binding.
-    try:
-        llm = llm.model_copy(update={"max_tokens": 16384})
-    except Exception:  # pragma: no cover - older LC / non-pydantic models
-        pass
+    llm = with_max_tokens(llm, 16384)
     agent = create_agent(
         model=llm,
         tools=tools,
@@ -462,6 +461,7 @@ async def analyst_node(
             BudgetAwarePromptMiddleware(run_limit=analyst_call_limit),
             FinalizeBeforeModelLimitMiddleware(run_limit=analyst_call_limit, buffer=3, structured_tool_name="AnalystResult"),
             ModelCallLimitMiddleware(run_limit=analyst_call_limit, exit_behavior="end"),
+            *fallback_middleware(16384),
         ],
         response_format=ToolStrategy(AnalystResult),
         name="analyst",

@@ -11,7 +11,10 @@ services:
       - PYTHONPATH=/app
       # LLM Configuration
       - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
-      - LLM_MODEL=${LLM_MODEL:-claude-sonnet-4-20250514}
+      - LLM_MODEL=${LLM_MODEL:-}
+      - RECON_LLM_MODEL=${RECON_LLM_MODEL:-}
+      - ANALYST_LLM_MODEL=${ANALYST_LLM_MODEL:-}
+      - PENTESTER_LLM_MODEL=${PENTESTER_LLM_MODEL:-}
       # Robustness: the OSS default (60s / 2 retries) is too low for the rich
       # analyst/pentester structured-output calls — they time out and get
       # silently dropped, producing 0 hypotheses. Production uses 180/4.
@@ -21,6 +24,10 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+      - NVIDIA_BASE_URL=${NVIDIA_BASE_URL:-}
+      - LLM_FALLBACKS=${LLM_FALLBACKS:-}
       # Search API Keys (optional)
       - FENNEC_TAVILY_API_KEY=${TAVILY_API_KEY}
       - FENNEC_PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}

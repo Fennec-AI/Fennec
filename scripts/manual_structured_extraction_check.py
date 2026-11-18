@@ -30,7 +30,7 @@ from src.schemas.recon_result import ReconResult  # noqa: E402
 def _have_keys() -> bool:
     return any(
         os.getenv(k)
-        for k in ("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY")
+        for k in ("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY")
     )
 
 

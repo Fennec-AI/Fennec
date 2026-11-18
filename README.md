@@ -41,7 +41,7 @@ There is a [hosted version at fenneclabs.ai](https://fenneclabs.ai) with team fe
 ## Requirements
 
 - Docker Desktop (or Docker Engine ≥ 20.10)
-- An LLM API key — one of **Anthropic** (recommended), **OpenAI**, or **OpenRouter**
+- An LLM API key — one of **Anthropic** (recommended), **OpenAI**, **Google Gemini**, **NVIDIA**, or **OpenRouter** (you can configure several at once)
 - ~15 GB free disk for the Kali execution image (built once)
 - Python 3.11+ only if you want to skip Docker for the agent itself and run the CLI directly
 
@@ -221,9 +221,11 @@ Everything is `.env`-driven. The knobs that matter:
 
 | Variable | What it does |
 |---|---|
-| `LLM_PROVIDER` | `anthropic` (default), `openai`, or `openrouter` |
-| `LLM_MODEL` | Model name for the provider (default `claude-sonnet-4-6`) |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` | One must be set, matching `LLM_PROVIDER` |
+| `LLM_PROVIDER` | Primary provider: `anthropic` (default), `openai`, `openrouter`, `gemini`, or `nvidia` |
+| `LLM_MODEL` | Model name for the primary provider (defaults: `claude-sonnet-4-6`, `gpt-4.1`, `gemini-2.5-pro`, `meta/llama-3.3-70b-instruct` for NVIDIA) |
+| `LLM_FALLBACKS` | Optional comma-separated chain tried when the primary model errors, e.g. `gemini,nvidia:meta/llama-3.3-70b-instruct` |
+| `RECON_LLM_MODEL` / `ANALYST_LLM_MODEL` / `PENTESTER_LLM_MODEL` | Optional per-agent model; `provider:model` (e.g. `gemini:gemini-2.5-flash`) runs that agent on another provider |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` / `GEMINI_API_KEY` / `NVIDIA_API_KEY` | Set the key for every provider you use; several can be set at once (`GOOGLE_API_KEY` is accepted for Gemini, `NVIDIA_BASE_URL` points at a self-hosted NIM) |
 | `DOCKER_IMAGE` | Kali image tag (default `fennec-linux`, built by `linux/Makefile`) |
 | `EXECUTION_MODE` | `docker` (default — spawn a Kali sibling per scan) or `local` (run tools in the agent container directly) |
 | `FENNEC_METHOD` | `turbo` / `balanced` / `deep` |

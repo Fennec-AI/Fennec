@@ -172,14 +172,10 @@ async def _run_job(job: Job) -> None:
     try:
         from src.config.settings import get_config
         _cfg = get_config()
-        _key = {
-            "anthropic": _cfg.anthropic_api_key,
-            "openai": _cfg.openai_api_key,
-            "openrouter": _cfg.openrouter_api_key,
-        }.get(_cfg.llm_provider)
-        if not _key:
+        _missing = _cfg.missing_api_keys()
+        if _missing:
             job.error = (
-                f"No LLM API key configured for provider '{_cfg.llm_provider}'. "
+                f"No LLM API key configured for provider(s): {', '.join(_missing)}. "
                 "Set the matching API key in your .env / environment."
             )
             job.mark("failed")

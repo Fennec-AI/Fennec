@@ -309,6 +309,8 @@ async def run_pentest(
         llm_pentester = create_llm(config.pentester_llm_model) if config.pentester_llm_model else None
 
         logger.info(f"LLM initialized: {config.llm_provider}/{config.llm_model}")
+        if config.llm_fallbacks:
+            logger.info(f"  Fallbacks: {config.llm_fallbacks}")
         if config.recon_llm_model:
             logger.info(f"  Recon LLM: {config.recon_llm_model}")
         if config.analyst_llm_model:

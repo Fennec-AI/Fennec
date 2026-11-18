@@ -25,10 +25,12 @@ try:
     from ..middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from ..middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from ..middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
+    from ..config.settings import fallback_middleware
 except ImportError:
     from src.middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from src.middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from src.middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
+    from src.config.settings import fallback_middleware
 
 try:
     from ..schemas.coder_result import CoderResult
@@ -151,6 +153,7 @@ async def run_coder(
             BudgetAwarePromptMiddleware(run_limit=max_iterations),
             FinalizeBeforeModelLimitMiddleware(run_limit=max_iterations, buffer=3, structured_tool_name="CoderResult"),
             ModelCallLimitMiddleware(run_limit=max_iterations, exit_behavior="end"),
+            *fallback_middleware(),
         ],
         response_format=ToolStrategy(CoderResult),
         name="coder",

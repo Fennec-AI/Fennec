@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Google Gemini as an LLM provider: `LLM_PROVIDER=gemini` with `GEMINI_API_KEY` (or `GOOGLE_API_KEY`), via `langchain-google-genai`; `LLM_MODEL` defaults per provider when unset
+- NVIDIA as an LLM provider (`LLM_PROVIDER=nvidia`, `NVIDIA_API_KEY`, optional `NVIDIA_BASE_URL` for self-hosted NIM)
+- Multiple providers at once: `LLM_FALLBACKS` chain used when the primary model errors, and `provider:model` specs for per-agent overrides
+
+### Changed
+- All LLM construction goes through `src.config.settings.create_llm` (the CLI no longer builds its own clients)
+
 ## [0.2.0] - 2026-06-30
 
 ### Added
