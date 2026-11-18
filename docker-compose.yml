@@ -37,6 +37,8 @@ services:
       # synthetic data on startup (useful for previewing the UI without
       # running a real scan).
       - FENNEC_DEMO_SEED=${FENNEC_DEMO_SEED:-}
+      - FENNEC_CHAT_DB_PATH=${FENNEC_CHAT_DB_PATH:-data/finding_chats.sqlite3}
+      - FENNEC_DATA_DIR=/app/data
       # LangChain / LangSmith tracing (pass-through from host .env)
       - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-}
       - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
@@ -49,6 +51,8 @@ services:
     volumes:
       # Mount Docker socket for spawning pentest containers
       - /var/run/docker.sock:/var/run/docker.sock
+      # Keep chat history when the backend container is recreated.
+      - ./data:/app/data
     # Resolve host.docker.internal to the host machine. Docker Desktop adds
     # this automatically, but Linux Docker Engine requires the explicit
     # extra_hosts entry below. Needed so the agent can target services

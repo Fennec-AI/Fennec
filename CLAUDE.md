@@ -41,7 +41,7 @@ frontend/                 React + Vite dashboard (optional)
 - **Everything is async.** Tools, graph nodes, the Docker client. Use `async def` and `await`. Use `aiodocker` for container ops, `httpx` (not requests) for HTTP.
 - **Tool execution always goes through the Kali container** unless `EXECUTION_MODE=local`. Never shell out to host tools from agent code.
 - **Configuration is `.env` → Pydantic settings** (`src/config/settings.py`). Don't introduce new config files.
-- **No persistence layer.** Findings live in the in-process `CorrelationStore` and are written to `./reports/<timestamp>_<host>/` at end of run. The FastAPI server keeps a process-local `JOBS` dict (`src/api/job_store.py`) that disappears on restart. There is no database — don't add one.
+- **Dashboard state is process-local by default.** Findings live in the in-process `CorrelationStore` and are written to `./reports/<timestamp>_<host>/` at end of run. `FENNEC_DATA_DIR` enables JSON snapshots of jobs, targets, and credentials (`src/api/persistence.py`); Docker Compose sets it to `/app/data`. Finding chat messages are stored separately in local SQLite (`src/api/finding_chat_store.py`). Do not add another scan database without an explicit request.
 - **No auth layer.** The CLI runs anonymously, and the API server trusts whoever can reach it. Don't reintroduce a login flow.
 
 ## Adding a new tool

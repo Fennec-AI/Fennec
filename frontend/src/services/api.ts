@@ -24,10 +24,21 @@ export const findingsApi = {
     fetchApi<Finding[]>(`/dashboard/findings?${new URLSearchParams({ ...filters, limit: '1000' })}`),
   facets: () => fetchApi<FindingFacets>('/dashboard/findings/facets'),
   get: (id: string) => fetchApi<Finding>(`/dashboard/findings/${encodeURIComponent(id)}`),
-  chat: (id: string, messages: Array<{ role: 'user' | 'assistant'; content: string }>) =>
-    fetchApi<{ reply: string }>(`/findings/${encodeURIComponent(id)}/chat`, {
-      method: 'POST', body: JSON.stringify({ messages }),
+  chatHistory: (id: string) =>
+    fetchApi<{ messages: Array<{ role: 'user' | 'assistant'; content: string }> }>(
+      `/findings/${encodeURIComponent(id)}/chat`),
+  chat: (id: string, message: string) =>
+    fetchApi<{ reply: string; messages: Array<{ role: 'user' | 'assistant'; content: string }> }>(
+      `/findings/${encodeURIComponent(id)}/chat`, {
+      method: 'POST', body: JSON.stringify({ message }),
     }),
+  clearChat: (id: string) =>
+    fetchApi<{ messages: [] }>(`/findings/${encodeURIComponent(id)}/chat`, { method: 'DELETE' }),
+  importChat: (id: string, messages: Array<{ role: 'user' | 'assistant'; content: string }>) =>
+    fetchApi<{ messages: Array<{ role: 'user' | 'assistant'; content: string }> }>(
+      `/findings/${encodeURIComponent(id)}/chat/import`, {
+        method: 'POST', body: JSON.stringify({ messages }),
+      }),
 };
 
 // Generic fetch wrapper with error handling

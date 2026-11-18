@@ -115,6 +115,9 @@ class FennecConfig(BaseSettings):
     # Provider/client-level retries for transient failures.
     llm_max_retries: int = 2
 
+    # Durable local history for finding chat (relative to the API working directory).
+    chat_db_path: str = "data/finding_chats.sqlite3"
+
     # API Keys - also read from standard env vars
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None

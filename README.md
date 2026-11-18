@@ -211,7 +211,7 @@ Once the stack is up:
 
 5. **Watch the agents work.** The Status page streams live events: recon results, hypotheses being formed, tool calls (nmap, curl, sqlmap, custom payloads), and findings as they're confirmed. The hypothesis tree shows what's pending / in-progress / vulnerable / safe.
 
-6. **Review findings.** Open **Findings** in the sidebar to filter by site, scan, severity, or text. Each finding shows the recorded request/response, textual evidence, payloads, reproduction steps, commands, impact, and remediation. Use the chat panel to ask the configured LLM about the selected finding; chat history is saved per finding in this browser and can be cleared with **Limpar**. Configure an LLM API key to enable chat.
+6. **Review findings.** Open **Findings** in the sidebar to filter by site, scan, severity, or text. Each finding shows the recorded request/response, textual evidence, payloads, reproduction steps, commands, impact, and remediation. Use the chat panel to ask the configured LLM about the selected finding; chat history is saved per finding in the server's local SQLite database and can be cleared with **Limpar**. Configure an LLM API key to enable chat. The database defaults to `data/finding_chats.sqlite3` (`FENNEC_CHAT_DB_PATH` can change it). Docker Compose mounts `./data` and enables dashboard snapshots, so both chats and their associated scans survive container recreation. For a local API launch, set `FENNEC_DATA_DIR=data` to retain scans across restarts as well.
 
 7. **Export.** Each finding has a JSON export. The agents also dump a Markdown report under `./reports/<timestamp>_<host>/summary.md` for the CLI flow.
 

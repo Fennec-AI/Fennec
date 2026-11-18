@@ -42,9 +42,10 @@ import asyncio
 import logging
 import os
 import secrets
+import sqlite3
 import uuid
 from datetime import datetime, timezone
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Literal, Optional
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -61,6 +62,7 @@ from .job_store import (
     TargetRecord,
 )
 from .demo_seed import seed_demo
+from .finding_chat_store import FindingChatStore
 from .findings import build_job_findings, merged_findings, filter_findings, facets
 
 logger = logging.getLogger("fennec.api")
@@ -874,13 +876,59 @@ async def dashboard_finding(finding_id: str) -> dict:
     raise HTTPException(status_code=404, detail="Finding not found")
 
 
-class FindingChatMessage(BaseModel):
-    role: str
-    content: str = Field(min_length=1, max_length=4000)
-
-
 class FindingChatRequest(BaseModel):
-    messages: list[FindingChatMessage] = Field(min_length=1, max_length=20)
+    message: str = Field(min_length=1, max_length=4000)
+
+
+class FindingChatImportMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=100000)
+
+
+class FindingChatImportRequest(BaseModel):
+    messages: list[FindingChatImportMessage] = Field(max_length=2000)
+
+
+def _chat_store() -> FindingChatStore:
+    from src.config.settings import get_config
+
+    return FindingChatStore(get_config().chat_db_path)
+
+
+@app.get("/findings/{finding_id}/chat")
+async def finding_chat_history(finding_id: str) -> dict:
+    await dashboard_finding(finding_id)
+    try:
+        return {"messages": await _chat_store().list_messages(finding_id)}
+    except (OSError, sqlite3.Error):
+        logger.exception("Could not load finding chat history")
+        raise HTTPException(status_code=503, detail="Finding chat database unavailable") from None
+
+
+@app.delete("/findings/{finding_id}/chat")
+async def clear_finding_chat(finding_id: str) -> dict:
+    await dashboard_finding(finding_id)
+    try:
+        await _chat_store().clear(finding_id)
+    except (OSError, sqlite3.Error):
+        logger.exception("Could not clear finding chat history")
+        raise HTTPException(status_code=503, detail="Finding chat database unavailable") from None
+    return {"messages": []}
+
+
+@app.post("/findings/{finding_id}/chat/import")
+async def import_finding_chat(finding_id: str, body: FindingChatImportRequest) -> dict:
+    await dashboard_finding(finding_id)
+    if any(m.role == "user" and len(m.content) > 4000 for m in body.messages):
+        raise HTTPException(status_code=422, detail="User messages cannot exceed 4000 characters")
+    try:
+        messages = await _chat_store().import_if_empty(
+            finding_id, [m.model_dump() for m in body.messages]
+        )
+    except (OSError, sqlite3.Error):
+        logger.exception("Could not import finding chat history")
+        raise HTTPException(status_code=503, detail="Finding chat database unavailable") from None
+    return {"messages": messages}
 
 
 @app.post("/findings/{finding_id}/chat")
@@ -890,23 +938,37 @@ async def finding_chat(finding_id: str, body: FindingChatRequest) -> dict:
     from src.prompts.finding_chat import finding_chat_prompt
 
     finding = await dashboard_finding(finding_id)
-    if any(m.role not in {"user", "assistant"} for m in body.messages) or body.messages[-1].role != "user":
-        raise HTTPException(status_code=422, detail="Chat messages must end with a user message")
+    if not body.message.strip():
+        raise HTTPException(status_code=422, detail="Chat message cannot be blank")
     config = get_config()
-    if not config.provider_api_key() and not config.available_providers():
+    if not config.provider_api_key() and not config.configured_providers():
         raise HTTPException(status_code=503, detail="Configure an LLM API key to use finding chat")
+    store = _chat_store()
     try:
-        primary = get_default_llm() if config.provider_api_key() else create_llm(config.available_providers()[0])
+        history = await store.recent_messages(finding_id, limit=19)
+    except (OSError, sqlite3.Error):
+        logger.exception("Could not load finding chat history")
+        raise HTTPException(status_code=503, detail="Finding chat database unavailable") from None
+    try:
+        primary = get_default_llm() if config.provider_api_key() else create_llm(config.configured_providers()[0])
         fallbacks = get_fallback_llms()
         llm = primary.with_fallbacks(fallbacks) if fallbacks else primary
         messages = [SystemMessage(content=finding_chat_prompt(finding))]
-        messages.extend(HumanMessage(content=m.content) if m.role == "user" else AIMessage(content=m.content)
-                        for m in body.messages)
+        messages.extend(HumanMessage(content=m["content"][:4000]) if m["role"] == "user"
+                        else AIMessage(content=m["content"][:4000]) for m in history)
+        messages.append(HumanMessage(content=body.message))
         response = await llm.ainvoke(messages)
     except Exception:
         logger.exception("Finding chat failed")
         raise HTTPException(status_code=502, detail="AI provider unavailable") from None
-    return {"reply": response.content if isinstance(response.content, str) else str(response.content)}
+    reply = response.content if isinstance(response.content, str) else str(response.content)
+    try:
+        await store.append_exchange(finding_id, body.message, reply)
+        history = await store.list_messages(finding_id)
+    except (OSError, sqlite3.Error):
+        logger.exception("Could not save finding chat history")
+        raise HTTPException(status_code=503, detail="Finding chat database unavailable") from None
+    return {"reply": reply, "messages": history}
 
 
 # ---------------------------------------------------------------------------

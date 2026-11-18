@@ -4,7 +4,11 @@ import os
 from dataclasses import fields
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from .job_store import JOBS, TARGETS, CREDENTIALS, Job, TargetRecord, CredentialRecord
+
+load_dotenv()
 
 _TRANSIENT = {'task', 'subscribers', 'review_queue'}
 

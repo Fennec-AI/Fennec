@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Finding chat history now persists in a local SQLite database and reloads from the server; existing browser history is imported once.
+
 ### Added
 - Findings filters by site, scan, severity, and search; complete per-finding evidence and reproduction details; read-only AI chat about the selected finding
 - Finding detail and facet API endpoints, plus a stateless per-finding chat endpoint

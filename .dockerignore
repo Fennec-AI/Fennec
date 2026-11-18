@@ -38,6 +38,7 @@ tests/
 fixtures/
 linux/
 seed_data/
+data/
 *.md
 
 # Misc

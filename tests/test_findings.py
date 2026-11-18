@@ -52,7 +52,7 @@ def test_merge_uses_hypothesis_identity_and_filter_facets():
     assert merged_findings(legacy)[0]["impact_demonstrated"] == "legacy impact"
 
 
-def test_endpoints_and_chat(monkeypatch):
+def test_endpoints_and_chat(monkeypatch, tmp_path):
     job = Job(id="scan", name="Scan A", target_url="https://example.com", target_id="target-a")
     job.findings = [{"id": "scan-finding-0", "job_id": "scan", "hypothesis_id": "H1",
                      "title": "SQL injection", "description": "Observed injection", "severity": "high",
@@ -60,35 +60,55 @@ def test_endpoints_and_chat(monkeypatch):
     previous = JOBS._jobs.copy()
     JOBS.put(job)
     try:
+        from src.config import settings
+        monkeypatch.setattr(settings, "get_config", lambda: SimpleNamespace(
+            provider_api_key=lambda: None, configured_providers=lambda: [],
+            chat_db_path=str(tmp_path / "chat.sqlite3")))
         client = TestClient(app)
         assert client.get("/dashboard/findings", params={"target_id": "target-a"}).json()[0]["host"] == "example.com"
         assert client.get("/dashboard/findings", params={"host": "wrong"}).json() == []
         assert client.get("/dashboard/findings/facets").json()["severities"] == [{"value": "high", "count": 1}]
         assert client.get("/dashboard/findings/scan-finding-0").json()["title"] == "SQL injection"
         assert client.get("/dashboard/findings/missing").status_code == 404
-        assert client.post("/findings/scan-finding-0/chat", json={"messages": [
-            {"role": "user", "content": "x" * 4001}]}).status_code == 422
-        assert client.post("/findings/scan-finding-0/chat", json={"messages": [
-            {"role": "user", "content": "x"}] * 21}).status_code == 422
+        assert client.get("/findings/scan-finding-0/chat").json() == {"messages": []}
+        legacy = [{"role": "user", "content": "Old browser message"}]
+        assert client.post("/findings/scan-finding-0/chat/import", json={
+            "messages": legacy}).json() == {"messages": legacy}
+        assert client.post("/findings/scan-finding-0/chat/import", json={
+            "messages": legacy}).json() == {"messages": legacy}
+        assert client.delete("/findings/scan-finding-0/chat").json() == {"messages": []}
+        assert client.post("/findings/scan-finding-0/chat", json={
+            "message": "x" * 4001}).status_code == 422
 
-        from src.config import settings
-        monkeypatch.setattr(settings, "get_config", lambda: SimpleNamespace(
-            provider_api_key=lambda: None, available_providers=lambda: []))
-        assert client.post("/findings/scan-finding-0/chat", json={"messages": [
-            {"role": "user", "content": "Explique"}]}).status_code == 503
+        assert client.post("/findings/scan-finding-0/chat", json={
+            "message": "Explique"}).status_code == 503
 
         monkeypatch.setattr(settings, "get_config", lambda: SimpleNamespace(
-            provider_api_key=lambda: "fake", available_providers=lambda: ["nvidia"]))
+            provider_api_key=lambda: "fake", configured_providers=lambda: ["nvidia"],
+            chat_db_path=str(tmp_path / "chat.sqlite3")))
         class FakeLLM:
             async def ainvoke(self, messages):
                 assert "SQL injection" in messages[0].content
                 assert "untrusted" in messages[0].content
+                assert len(messages) <= 21
+                if messages[-1].content == "E depois?":
+                    assert messages[1].content == "Explique"
+                    assert messages[2].content == "A resposta"
                 return SimpleNamespace(content="A resposta")
         monkeypatch.setattr(settings, "get_default_llm", lambda: FakeLLM())
         monkeypatch.setattr(settings, "get_fallback_llms", lambda: [])
-        response = client.post("/findings/scan-finding-0/chat", json={"messages": [
-            {"role": "user", "content": "Explique"}]})
+        response = client.post("/findings/scan-finding-0/chat", json={"message": "Explique"})
         assert response.status_code == 200
-        assert response.json() == {"reply": "A resposta"}
+        assert response.json()["reply"] == "A resposta"
+        assert response.json()["messages"] == [
+            {"role": "user", "content": "Explique"},
+            {"role": "assistant", "content": "A resposta"},
+        ]
+        assert client.get("/findings/scan-finding-0/chat").json()["messages"] == response.json()["messages"]
+        assert client.post("/findings/scan-finding-0/chat", json={
+            "message": "E depois?"}).status_code == 200
+        assert len(client.get("/findings/scan-finding-0/chat").json()["messages"]) == 4
+        assert client.delete("/findings/scan-finding-0/chat").status_code == 200
+        assert client.get("/findings/scan-finding-0/chat").json() == {"messages": []}
     finally:
         JOBS._jobs = previous
