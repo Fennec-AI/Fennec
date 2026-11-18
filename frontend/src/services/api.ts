@@ -12,10 +12,23 @@ import type {
   Target,
   Credential,
   RichFinding,
+  Finding,
+  FindingFacets,
 } from '../types';
 import type { ReconData, ToolExecution } from '../types/eventLog';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
+
+export const findingsApi = {
+  list: (filters: Record<string, string> = {}) =>
+    fetchApi<Finding[]>(`/dashboard/findings?${new URLSearchParams({ ...filters, limit: '1000' })}`),
+  facets: () => fetchApi<FindingFacets>('/dashboard/findings/facets'),
+  get: (id: string) => fetchApi<Finding>(`/dashboard/findings/${encodeURIComponent(id)}`),
+  chat: (id: string, messages: Array<{ role: 'user' | 'assistant'; content: string }>) =>
+    fetchApi<{ reply: string }>(`/findings/${encodeURIComponent(id)}/chat`, {
+      method: 'POST', body: JSON.stringify({ messages }),
+    }),
+};
 
 // Generic fetch wrapper with error handling
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {

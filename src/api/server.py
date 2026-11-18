@@ -61,6 +61,7 @@ from .job_store import (
     TargetRecord,
 )
 from .demo_seed import seed_demo
+from .findings import build_job_findings, merged_findings, filter_findings, facets
 
 logger = logging.getLogger("fennec.api")
 app = FastAPI(title="Fennec OSS API", version="0.1.0")
@@ -294,26 +295,7 @@ async def _run_job(job: Job) -> None:
         {"title": v, "hypothesis_id": None, "severity": "high"}
         for v in result.vulnerabilities
     ]
-    job.findings = [
-        {
-            "id": f"{job.id}-finding-{i}",
-            "job_id": job.id,
-            "title": f.get("title") or f"Finding {i}",
-            "description": f.get("description_overview") or result.final_summary,
-            "severity": (f.get("severity") or "info"),
-            "status": "confirmed",
-            "location": (f.get("description_breakdown") or {}).get("affected_endpoint") or job.target_url,
-            "parameter": "",
-            "evidence": "\n".join(f.get("evidence") or []),
-            "reproduction_steps": f.get("evidence_payloads") or [],
-            "vulnerability_type": (f.get("description_breakdown") or {}).get("vuln_type") or "",
-            "cwe_id": None,
-            "hypothesis_id": f.get("hypothesis_id"),
-            "discovered_at": _now,
-            "discovered_by": "pentester",
-        }
-        for i, f in enumerate(rich)
-    ]
+    job.findings = build_job_findings(job, rich, _now)
     # Rich per-finding detail (RichFinding shape) for the Findings detail panel.
     job.pentester_results = [
         {
@@ -323,7 +305,7 @@ async def _run_job(job: Job) -> None:
             "status": "completed",
             "verdict": (f.get("severity") or "vulnerable"),
             "evidence": f.get("evidence") or [],
-            "suggested_followups": [],
+            "suggested_followups": f.get("suggested_followups") or [],
             "needs": [],
             "error": None,
             "description_overview": f.get("description_overview") or f.get("title"),
@@ -339,6 +321,10 @@ async def _run_job(job: Job) -> None:
             "remediation_implementation": f.get("remediation_implementation"),
             "remediation_hardening": f.get("remediation_hardening"),
             "owasp_category": f.get("owasp_category"),
+            "cwe_id": f.get("cwe_id"),
+            "reproduction_steps": f.get("reproduction_steps") or [],
+            "commands_executed": f.get("commands_executed") or [],
+            "hypothesis_description": f.get("hypothesis_description"),
             "tasks": f.get("tasks") or [],
             "created_at": _now,
         }
@@ -840,17 +826,64 @@ async def dashboard_hypotheses(limit: int = 50) -> list[dict]:
 @app.get("/dashboard/findings")
 async def dashboard_findings(
     severity: Optional[str] = None,
-    limit: int = 50,
+    target_id: Optional[str] = None,
+    host: Optional[str] = None,
+    job_id: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: int = Query(200, ge=1, le=1000),
 ) -> list[dict]:
-    out: list[dict] = []
-    for job in JOBS.list_sorted(limit=100, offset=0):
-        for f in job.findings:
-            if severity and (f.get("severity") or "").lower() != severity.lower():
-                continue
-            out.append(f)
-            if len(out) >= limit:
-                return out
-    return out
+    records = [f for job in JOBS.list_sorted(limit=len(JOBS.all())) for f in merged_findings(job)]
+    return filter_findings(records, severity, target_id, host, job_id, q)[:limit]
+
+
+@app.get("/dashboard/findings/facets")
+async def dashboard_finding_facets() -> dict:
+    records = [f for job in JOBS.all() for f in merged_findings(job)]
+    return facets(records)
+
+
+@app.get("/dashboard/findings/{finding_id}")
+async def dashboard_finding(finding_id: str) -> dict:
+    for job in JOBS.all():
+        for finding in merged_findings(job):
+            if finding["id"] == finding_id:
+                return finding
+    raise HTTPException(status_code=404, detail="Finding not found")
+
+
+class FindingChatMessage(BaseModel):
+    role: str
+    content: str = Field(min_length=1, max_length=4000)
+
+
+class FindingChatRequest(BaseModel):
+    messages: list[FindingChatMessage] = Field(min_length=1, max_length=20)
+
+
+@app.post("/findings/{finding_id}/chat")
+async def finding_chat(finding_id: str, body: FindingChatRequest) -> dict:
+    from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+    from src.config.settings import get_config, get_default_llm, get_fallback_llms, create_llm
+    from src.prompts.finding_chat import finding_chat_prompt
+
+    finding = await dashboard_finding(finding_id)
+    if any(m.role not in {"user", "assistant"} for m in body.messages) or body.messages[-1].role != "user":
+        raise HTTPException(status_code=422, detail="Chat messages must end with a user message")
+    config = get_config()
+    if not config.provider_api_key() and not config.available_providers():
+        raise HTTPException(status_code=503, detail="Configure an LLM API key to use finding chat")
+    try:
+        primary = get_default_llm() if config.provider_api_key() else create_llm(config.available_providers()[0])
+        fallbacks = get_fallback_llms()
+        llm = primary.with_fallbacks(fallbacks) if fallbacks else primary
+        messages = [SystemMessage(content=finding_chat_prompt(finding))]
+        messages.extend(HumanMessage(content=m.content) if m.role == "user" else AIMessage(content=m.content)
+                        for m in body.messages)
+        response = await llm.ainvoke(messages)
+    except Exception:
+        logger.exception("Finding chat failed")
+        raise HTTPException(status_code=502, detail="AI provider unavailable") from None
+    return {"reply": response.content if isinstance(response.content, str) else str(response.content)}
 
 
 # ---------------------------------------------------------------------------

@@ -151,6 +151,37 @@ export interface FindingDetail {
   discovered_by: string;
 }
 
+export interface Finding extends Omit<FindingDetail, 'evidence' | 'status'> {
+  status: string;
+  evidence: string[];
+  target_id: string | null;
+  target_url: string;
+  host: string;
+  job_name: string;
+  job_created_at: string;
+  description_overview?: string | null;
+  description_breakdown?: Record<string, string> | null;
+  description_technical?: string | null;
+  hypothesis_description?: string | null;
+  impact_demonstrated?: string | null;
+  impact_attack_scenarios?: string | null;
+  impact_business_risk?: string | null;
+  evidence_logged?: Array<{ request: string; response: string }> | null;
+  evidence_payloads?: string[] | null;
+  evidence_observed?: string | null;
+  remediation_primary?: string | null;
+  remediation_implementation?: string | null;
+  remediation_hardening?: string | null;
+  owasp_category?: string | null;
+  commands_executed?: Array<Record<string, unknown>>;
+}
+
+export interface FindingFacets {
+  hosts: Array<{ value: string; count: number }>;
+  severities: Array<{ value: string; count: number }>;
+  scans: Array<{ value: string; label: string; count: number }>;
+}
+
 // Rich finding with MindFort-style tabs (extends FindingDetail for pentester results)
 export interface RichFinding {
   id: number;

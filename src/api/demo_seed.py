@@ -144,11 +144,12 @@ def _pentester_result(
     payloads: list[str] | None = None,
     implementation: str | None = None,
     hardening: str | None = None,
+    hypothesis_id: str | None = None,
 ) -> dict:
     return {
         "id": fid,
         "job_id": job_id,
-        "hypothesis_id": None,
+        "hypothesis_id": hypothesis_id,
         "status": "completed",
         "verdict": verdict,
         "evidence": evidence_lines,
@@ -534,6 +535,7 @@ def seed_demo() -> None:
     # ---- MARQUEE pentester_result (full rich content for the SQLi finding)
     j1.pentester_results = [
         _pentester_result(
+            hypothesis_id="H1",
             fid=1, job_id=j1.id, verdict="critical",
             overview=(
                 "The login endpoint /api/auth/login concatenates the email "
@@ -628,6 +630,7 @@ def seed_demo() -> None:
             days_ago=0.05,
         ),
         _pentester_result(
+            hypothesis_id="H2",
             fid=2, job_id=j1.id, verdict="high",
             overview="The /api/users/{id} endpoint exposes any user profile to any authenticated caller, regardless of the JWT subject.",
             impact="An attacker with any valid account can enumerate every user — emails, roles, MFA state — enabling targeted phishing or admin-account takeover.",
@@ -637,6 +640,7 @@ def seed_demo() -> None:
             days_ago=0.07,
         ),
         _pentester_result(
+            hypothesis_id="H3",
             fid=3, job_id=j1.id, verdict="medium",
             overview="The support contact form persists user-supplied HTML and renders it unescaped in the admin review panel.",
             impact="An anonymous attacker can execute JavaScript in an admin's browser context, leading to session theft or admin-action forgery.",
@@ -725,7 +729,7 @@ def seed_demo() -> None:
                  vuln_type="IDOR", cwe="CWE-639", hypothesis_id="H1", days_ago=0.003),
     ]
     j2.pentester_results = [
-        _pentester_result(fid=1, job_id=j2.id, verdict="high",
+        _pentester_result(fid=1, job_id=j2.id, hypothesis_id="H1", verdict="high",
                           overview="The /api/scans/{job_id} endpoint returns scan results for any job ID, not just those owned by the authenticated user.",
                           impact="An attacker can enumerate every tenant's scan history and read all confirmed vulnerabilities — a high-value information leak.",
                           remediation="Add a tenant-scoped query: select WHERE owner_id = jwt.sub AND id = path.job_id. Return 404 (not 403) on mismatch.",
@@ -786,7 +790,7 @@ def seed_demo() -> None:
                  vuln_type="CSRF", cwe="CWE-352", hypothesis_id="H1", days_ago=1.15),
     ]
     j3.pentester_results = [
-        _pentester_result(fid=1, job_id=j3.id, verdict="medium",
+        _pentester_result(fid=1, job_id=j3.id, hypothesis_id="H1", verdict="medium",
                           overview="The data-export endpoint can be invoked from any origin without a CSRF token.",
                           impact="An attacker who lures a logged-in user to a malicious page can trigger a full data export to the victim's own email — useful in social-engineering chains.",
                           remediation="Require a CSRF token tied to the session, OR set SameSite=Strict on the session cookie. Prefer both.",

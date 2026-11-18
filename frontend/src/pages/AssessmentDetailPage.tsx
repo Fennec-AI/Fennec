@@ -489,7 +489,7 @@ export default function AssessmentDetailPage() {
                         key={finding.id}
                         type="button"
                         onClick={() =>
-                          navigate(`/dashboard/findings?finding_id=${finding.id}`)
+                          navigate(`/dashboard/findings?job_id=${encodeURIComponent(testId || '')}&hypothesis_id=${encodeURIComponent(String(finding.hypothesis_id ?? ''))}`)
                         }
                         className="flex w-full items-start gap-3 rounded-lg border border-border/50 bg-fennec-dark-900 p-3 text-left transition-colors hover:bg-fennec-dark-800 hover:border-border"
                       >

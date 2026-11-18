@@ -117,6 +117,12 @@ See `get_method_preset` in `src/config/settings.py` for exact values — they ma
 ## What's intentionally missing in OSS
 
 - No persistence layer. Findings are written to `./reports/<timestamp>_<host>/` at end of run. There's no database, no Postgres, no Pub/Sub queue.
+
+### Findings dashboard API
+
+`GET /dashboard/findings` merges each scan's basic and rich results by `hypothesis_id`, then accepts `severity`, `target_id`, `host`, `job_id`, `q`, and `limit`. `GET /dashboard/findings/facets` supplies filter counts, and `GET /dashboard/findings/{finding_id}` returns one complete record. IDs are stable per scan. The older `/jobs/{id}/pentester_results` response remains available for the scan page.
+
+`POST /findings/{finding_id}/chat` accepts up to 20 user/assistant messages of at most 4,000 characters each and returns one reply. It sends truncated finding context to the configured LLM with provider fallbacks, treats evidence and tool output as untrusted data, executes no tools, and stores no chat history on the server. Without a configured API key it returns HTTP 503.
 - No multi-user auth. The CLI runs anonymously. There's no login, no user record, no quota.
 - No managed worker pool. One scan at a time, in the local Python process.
 

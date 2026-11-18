@@ -699,10 +699,14 @@ async def run_pentest(
                 entry = {
                     "title": title,
                     "hypothesis_id": hid,
+                    "hypothesis_title": hyp.get("title"),
+                    "hypothesis_description": hyp.get("description"),
                     "tasks": hyp.get("tasks") or [],
                     **detail,
                 }
                 entry.setdefault("severity", hyp.get("severity") or "info")
+                if not entry.get("owasp_category"):
+                    entry["owasp_category"] = hyp.get("owasp_category") or None
                 rich_findings.append(entry)
         result.vulnerabilities = vuln_titles
         result.rich_findings = rich_findings
