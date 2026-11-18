@@ -56,7 +56,7 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-6 py-6 px-6">
                 {/* Welcome header */}
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold text-white">
+                    <h1 className="text-[15px] leading-5 font-semibold tracking-[0.01em] text-ds-fg">
                         Security Overview
                     </h1>
                 </div>
@@ -73,7 +73,7 @@ export default function DashboardPage() {
                 {/* Score + stats row */}
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
-                        <span className="text-3xl font-bold text-white">{compositeScore}</span>
+                        <span className="font-mono text-2xl font-semibold tabular-nums text-ds-fg">{compositeScore}</span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded ${severityColor} bg-white/5`}>
                             /10 {severityLabel}
                         </span>
@@ -100,8 +100,8 @@ export default function DashboardPage() {
                         <span>{stats?.low_count ?? 0}</span>
                     </div>
                     <div className="h-6 w-px bg-border" />
-                    <span>🎯 {targets.length} targets</span>
-                    <span>📋 {stats?.total_tests ?? 0} assessments</span>
+                    <span className="font-mono">{targets.length} targets</span>
+                    <span className="font-mono">{stats?.total_tests ?? 0} assessments</span>
                 </div>
 
                 {/* Findings Trend chart with time range tabs */}

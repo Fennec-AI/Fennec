@@ -114,7 +114,7 @@ export function HypothesisDetailDialog({
           <DialogHeader>
             <div className="flex items-start justify-between gap-4 pb-4">
               <div className="flex-1 space-y-3">
-                <DialogTitle className="text-2xl text-white flex items-center gap-3">
+                <DialogTitle className="text-[15px] font-semibold text-ds-fg flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-fennec-purple-600/20 border border-fennec-purple-500/30">
                     <FlaskConical className="h-5 w-5 text-fennec-purple-400" />
                   </div>
@@ -178,7 +178,7 @@ export function HypothesisDetailDialog({
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg bg-fennec-dark-800/30 border border-fennec-dark-700">
                   <div className="text-xs text-fennec-dark-500 mb-1">Priority Score</div>
-                  <div className="text-2xl font-bold text-white">{Number(hypothesis.priority).toFixed(2)}</div>
+                  <div className="font-mono text-lg font-semibold tabular-nums text-ds-fg">{Number(hypothesis.priority).toFixed(2)}</div>
                 </div>
                 <div className="p-4 rounded-lg bg-fennec-dark-800/30 border border-fennec-dark-700">
                   <div className="text-xs text-fennec-dark-500 mb-1">Required Agent</div>

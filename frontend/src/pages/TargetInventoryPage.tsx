@@ -277,7 +277,7 @@ export default function TargetInventoryPage() {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-[15px] leading-5 font-semibold tracking-[0.01em]">
               Targets ({targets.length})
             </h1>
             <p className="text-sm text-muted-foreground mt-1">

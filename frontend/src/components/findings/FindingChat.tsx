@@ -78,13 +78,13 @@ export default function FindingChat({ findingId }: { findingId: string }) {
       {loading && <p className="text-xs text-muted-foreground">Carregando histórico…</p>}
       {!loading && !error && <p className="text-xs text-muted-foreground">Histórico salvo no servidor.</p>}
       {!loading && !messages.length && suggestions.map(s => <button key={s} disabled={busy} onClick={() => send(s)} className="block w-full rounded border border-border p-2 text-left text-xs text-muted-foreground hover:bg-muted disabled:opacity-50">{s}</button>)}
-      {messages.map((m, i) => <div key={i} className={`whitespace-pre-wrap rounded p-3 text-sm ${m.role === 'user' ? 'bg-fennec-purple-500/20 text-foreground' : 'bg-muted text-foreground'}`}>{m.content}</div>)}
+      {messages.map((m, i) => <div key={i} className={`whitespace-pre-wrap rounded p-3 text-sm ${m.role === 'user' ? 'border border-border bg-ds-sunken text-ds-fg' : 'border border-border bg-ds-elevated text-ds-fg-muted'}`}>{m.content}</div>)}
       {busy && <p className="text-xs text-muted-foreground">A IA está respondendo…</p>}
       {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
     </div>
     <form className="flex shrink-0 gap-2 border-t border-border p-3" onSubmit={e => { e.preventDefault(); send(draft); }}>
       <input aria-label="Pergunta sobre a falha" value={draft} onChange={e => setDraft(e.target.value)} maxLength={4000} placeholder="Pergunte sobre a falha" className="min-w-0 flex-1 rounded bg-muted px-2 py-2 text-sm text-foreground" />
-      <button disabled={busy || loading || !draft.trim()} className="rounded bg-fennec-purple-600 px-3 text-sm text-white disabled:opacity-50">Enviar</button>
+      <button disabled={busy || loading || !draft.trim()} className="rounded-[4px] border border-border bg-ds-sunken px-3 text-[11px] font-semibold text-ds-fg-muted hover:border-ds-border-strong hover:bg-ds-panel-hover hover:text-ds-fg disabled:cursor-not-allowed disabled:opacity-50">Enviar</button>
     </form>
   </aside>;
 }

@@ -48,7 +48,7 @@ export function StatsPanel({
             key={stat.label}
             className={cn('text-center p-2 rounded-lg', stat.bg)}
           >
-            <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
+            <p className={cn('font-mono text-lg font-semibold tabular-nums', stat.color)}>{stat.value}</p>
             <p className="text-xs text-fennec-dark-500">{stat.label}</p>
           </div>
         ))}

@@ -307,7 +307,7 @@ export default function AssessmentDetailPage() {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold">{test.title || 'Security Assessment'}</h1>
+              <h1 className="text-[15px] leading-5 font-semibold tracking-[0.01em]">{test.title || 'Security Assessment'}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <a
                   href={test.target_url}

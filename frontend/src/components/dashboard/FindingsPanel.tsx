@@ -176,7 +176,7 @@ function FindingCard({ finding, severity }: FindingCardProps) {
       )}
 
       {finding.created_at && (
-        <div className="mt-2 flex items-center gap-2 text-xs text-fennec-dark-600">
+        <div className="mt-2 flex items-center gap-2 text-xs text-fennec-dark-500">
           <span>{new Date(finding.created_at).toLocaleString()}</span>
         </div>
       )}

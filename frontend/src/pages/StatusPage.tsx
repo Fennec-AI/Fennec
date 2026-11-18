@@ -119,7 +119,7 @@ export default function StatusPage() {
       <div className="flex flex-col gap-6 p-4 lg:p-6">
         {/* Page Title */}
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Assessments</h1>
+          <h1 className="text-[15px] leading-5 font-semibold tracking-[0.01em]">Assessments</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Monitor and manage your security assessments
           </p>
@@ -133,7 +133,7 @@ export default function StatusPage() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-emerald-500" />
-              <h2 className="text-lg font-medium">Active Assessments</h2>
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.08em] text-ds-tertiary">Active Assessments</h2>
               {runningTests.length > 0 && (
                 <Badge variant="secondary" className="text-xs">
                   {runningTests.length}
@@ -242,7 +242,7 @@ export default function StatusPage() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-lg font-medium">Scheduled Assessments</h2>
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.08em] text-ds-tertiary">Scheduled Assessments</h2>
           </div>
           <div className="rounded-lg border border-border/50 bg-muted/20 p-6 text-center">
             <p className="text-sm text-muted-foreground">
@@ -255,7 +255,7 @@ export default function StatusPage() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <History className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-lg font-medium">Historical Assessments</h2>
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.08em] text-ds-tertiary">Historical Assessments</h2>
             {completedTests.length > 0 && (
               <Badge variant="secondary" className="text-xs">
                 {completedTests.length}

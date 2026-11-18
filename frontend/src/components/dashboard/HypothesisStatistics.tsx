@@ -48,7 +48,7 @@ function StatCard({ icon, label, value, colorClass, iconColorClass }: StatCardPr
         {icon}
       </div>
       <div className="flex-1">
-        <div className={cn("text-2xl font-bold", colorClass)}>{value}</div>
+        <div className={cn("font-mono text-lg font-semibold tabular-nums", colorClass)}>{value}</div>
         <div className="text-xs text-fennec-dark-500">{label}</div>
       </div>
     </div>

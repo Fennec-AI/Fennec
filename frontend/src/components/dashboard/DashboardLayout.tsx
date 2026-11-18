@@ -21,8 +21,9 @@ export default function DashboardLayout({
             className={fitViewport ? "h-dvh min-h-0 overflow-hidden" : undefined}
             style={
                 {
-                    '--sidebar-width': '18rem',
-                    '--header-height': '3rem',
+                    // Claudin sizes: sidebar-width 224px, titlebar-height 32px
+                    '--sidebar-width': '224px',
+                    '--header-height': '32px',
                 } as React.CSSProperties
             }
         >

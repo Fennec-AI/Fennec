@@ -29,14 +29,14 @@ export default function NotFoundPage() {
                 <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
                     <Link
                         to="/"
-                        className="rounded-lg bg-[color:var(--color-fennec-lime)] px-5 py-2 text-sm font-semibold text-black transition hover:bg-[color:var(--color-fennec-lime-dim)]"
+                        className="inline-flex h-7 items-center rounded-[4px] border border-border bg-ds-sunken px-3 text-[11px] font-semibold text-ds-fg-muted hover:border-ds-border-strong hover:bg-ds-panel-hover hover:text-ds-fg"
                     >
                         Back to home
                     </Link>
                     <button
                         type="button"
                         onClick={handleBack}
-                        className="rounded-lg border border-[color:var(--color-dark-border)] px-5 py-2 text-sm font-semibold text-[color:var(--color-text-primary)] transition hover:border-[color:var(--color-fennec-lime)]"
+                        className="inline-flex h-7 items-center rounded-[4px] border border-border bg-ds-sunken px-3 text-[11px] font-semibold text-ds-fg-muted hover:border-ds-border-strong hover:bg-ds-panel-hover hover:text-ds-fg"
                     >
                         Go back
                     </button>

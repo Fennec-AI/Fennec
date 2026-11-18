@@ -37,7 +37,7 @@ export function HypothesisCard({
   }
   const statusColors: Record<string, string> = {
     pending: 'border-fennec-dark-600 bg-fennec-dark-900/30',
-    in_progress: 'border-fennec-purple-500 shadow-fennec-purple-500/20 shadow-lg bg-fennec-purple-900/10',
+    in_progress: 'border-ds-border-strong bg-ds-panel',
     completed: 'border-fennec-green-600 bg-fennec-green-900/10',
     blocked: 'border-fennec-orange-500 bg-fennec-orange-900/10',
     dead_end: 'border-fennec-dark-500 bg-fennec-dark-900/20',
@@ -70,9 +70,9 @@ export function HypothesisCard({
   return (
     <div
       className={cn(
-        'rounded-lg border-2 transition-all cursor-pointer hover:scale-[1.02] hover:shadow-xl group',
+        'rounded-lg border cursor-pointer hover:border-ds-border-strong group',
         statusColors[hypothesis.status] || statusColors.pending,
-        isActive && 'ring-2 ring-fennec-purple-400/50',
+        isActive && 'ring-2 ring-ds-border-strong',
         // Add left border color based on hypothesis.color
         hypothesis.color && `border-l-4`,
       )}
@@ -146,7 +146,7 @@ export function HypothesisCard({
               <span>
                 {completedTasks}/{totalTasks} tasks
               </span>
-              <span className="text-fennec-dark-600">({progressPercent}%)</span>
+              <span className="text-fennec-dark-500">({progressPercent}%)</span>
             </div>
           )}
 

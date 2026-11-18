@@ -70,18 +70,18 @@ export default function StatsCards({ stats, isLoading }: StatsCardsProps) {
     ];
 
     return (
-        <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
+        <div className="grid grid-cols-1 gap-2 px-4 lg:px-5 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
             {cards.map((card) => (
                 <Card key={card.title} className="@container/card">
                     <CardHeader>
-                        <CardDescription className="flex items-center gap-2">
-                            <card.icon className="h-4 w-4" />
+                        <CardDescription className="ds-label flex items-center gap-1.5 font-sans">
+                            <card.icon className="h-3 w-3" />
                             {card.title}
                         </CardDescription>
                         {isLoading ? (
-                            <div className="h-8 w-24 animate-pulse rounded bg-muted" />
+                            <div className="h-6 w-20 rounded bg-ds-sunken" />
                         ) : (
-                            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                            <CardTitle className="ds-stat-value">
                                 {card.value}
                             </CardTitle>
                         )}
@@ -98,11 +98,11 @@ export default function StatsCards({ stats, isLoading }: StatsCardsProps) {
                             </div>
                         )}
                     </CardHeader>
-                    <CardFooter className="flex-col items-start gap-1.5 text-sm">
+                    <CardFooter className="flex-col items-start gap-1">
                         {card.badge && (
                             <Badge variant={card.badge.variant}>{card.badge.label}</Badge>
                         )}
-                        <div className="text-muted-foreground">{card.footer}</div>
+                        <div className="ds-meta text-[10px]">{card.footer}</div>
                     </CardFooter>
                 </Card>
             ))}

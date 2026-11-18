@@ -50,15 +50,11 @@ export function CurrentHypothesisAlert({
     <Alert
       variant="info"
       className={cn(
-        "relative overflow-hidden border-2 cursor-pointer transition-all hover:border-fennec-purple-400",
+        "relative overflow-hidden cursor-pointer hover:border-ds-border-strong",
         isStreaming && "animate-pulse-border"
       )}
       onClick={onClick}
     >
-      {/* Animated background gradient for active state */}
-      {isStreaming && (
-        <div className="absolute inset-0 bg-gradient-to-r from-fennec-purple-500/5 via-fennec-purple-400/10 to-fennec-purple-500/5 animate-gradient-x pointer-events-none" />
-      )}
 
       <FlaskConical className="h-5 w-5" />
       <div className="relative">
@@ -119,7 +115,7 @@ export function CurrentHypothesisAlert({
             )}
 
             {/* Hypothesis ID */}
-            <div className="text-xs text-fennec-dark-600 font-mono">
+            <div className="text-xs text-fennec-dark-500 font-mono">
               ID: {hypothesis.id}
             </div>
           </div>

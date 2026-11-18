@@ -49,20 +49,20 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <>
         <Sidebar collapsible="icon" {...props}>
             {/* ---- Header / Logo ---- */}
-            <SidebarHeader>
+            <SidebarHeader className="h-titlebar justify-center border-b bg-ds-elevated px-2 py-0">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             asChild
-                            className="data-[slot=sidebar-menu-button]:!p-1.5"
+                            className="h-6 hover:bg-transparent"
                         >
                             <Link to="/dashboard">
                                 <img
                                     src="/fennec.png"
                                     alt="Fennec"
-                                    className="h-6 w-6 rounded-md object-contain"
+                                    className="h-4 w-4 rounded-[4px] object-contain"
                                 />
-                                <span className="text-base font-semibold">Fennec</span>
+                                <span className="text-xs font-semibold tracking-[0.02em]">fennec</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -79,9 +79,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                                 <SidebarMenuButton
                                     tooltip="Create"
                                     onClick={() => setTestOpen(true)}
-                                    className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+                                    className="h-control min-w-8 justify-center border border-border bg-ds-sunken text-[11px] font-semibold text-ds-fg-muted hover:border-ds-border-strong hover:bg-ds-panel-hover hover:text-ds-fg active:bg-ds-panel-hover"
                                 >
-                                    <Plus className="h-4 w-4" />
+                                    <Plus className="h-3.5 w-3.5" />
                                     <span>Create</span>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -102,7 +102,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                                         onClick={() => navigate(item.href)}
                                         className="cursor-pointer"
                                     >
-                                        <item.icon className="h-4 w-4" />
+                                        <item.icon className="h-3.5 w-3.5" />
                                         <span>{item.title}</span>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
