@@ -29,11 +29,13 @@ try:
     from ..middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from ..middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
     from ..config.settings import fallback_middleware, with_max_tokens
+    from ..prompts.sections import get_execution_guidance
 except ImportError:
     from src.middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from src.middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from src.middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
     from src.config.settings import fallback_middleware, with_max_tokens
+    from src.prompts.sections import get_execution_guidance
 
 try:
     from ..state import FennecState, ReconData, CorrelationStore
@@ -203,6 +205,8 @@ Findings: {pending_result.get('findings', [])}
 
 You are an expert security analyst for authorized penetration testing.
 QUALITY HYPOTHESES lead to QUALITY FINDINGS - be specific and actionable.
+
+{get_execution_guidance()}
 
 ## TARGET
 {target_url}

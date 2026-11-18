@@ -26,11 +26,13 @@ try:
     from ..middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from ..middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
     from ..config.settings import fallback_middleware
+    from ..prompts.sections import get_execution_guidance
 except ImportError:
     from src.middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from src.middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from src.middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
     from src.config.settings import fallback_middleware
+    from src.prompts.sections import get_execution_guidance
 
 try:
     from ..schemas.coder_result import CoderResult
@@ -97,7 +99,7 @@ Complete the task. Produce your final structured response when finished."""
 
 def get_coder_prompt(task: str, context: str = "") -> str:
     """Generate the coder agent prompt."""
-    return CODER_PROMPT.format(
+    return f"{get_execution_guidance()}\n\n" + CODER_PROMPT.format(
         task=task or "No specific task provided",
         context=context or "No additional context",
     )

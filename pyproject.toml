@@ -63,3 +63,6 @@ fennec = "."
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[tool.setuptools.package-data]
+"src.prompts" = ["AGENT.md"]

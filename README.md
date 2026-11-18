@@ -319,6 +319,7 @@ Issues and PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev 
 - `python -m compileall src` should pass (and `pip install -e .[test] && pytest`)
 - New tools belong in `src/tools/` with a Pydantic input schema
 - New agents need an entry in `AgentType`, a router branch in `src/graph/`, and a prompt in `src/prompts/`
+- Shared agent rules live in `src/prompts/AGENT.md` and are read whenever a new recon, analyst, pentester, or coder prompt is built. That file includes the original `prompt/AGENT.md` text; Fennec's target scope, role rules, and structured output schemas take precedence over conflicting clauses.
 - Don't add proprietary services, telemetry, or auth gates — OSS stays vendor-neutral
 
 ## License

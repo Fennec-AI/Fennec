@@ -6,6 +6,7 @@ what we include per agent role, per testing mode, per assessment method.
 """
 
 from .authorization import AUTHORIZATION
+from .execution_guidance import get_execution_guidance
 from .persistence import PERSISTENCE
 from .testing_modes import BLACK_BOX_MODE, WHITE_BOX_MODE, COMBINED_MODE, get_testing_mode_prompt
 from .methodology import METHODOLOGY
@@ -22,6 +23,7 @@ from .agent_identities import (
 from .agent_rules import get_agent_rules
 __all__ = [
     "AUTHORIZATION",
+    "get_execution_guidance",
     "PERSISTENCE",
     "BLACK_BOX_MODE",
     "WHITE_BOX_MODE",

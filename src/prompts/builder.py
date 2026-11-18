@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 from .sections import (
     AUTHORIZATION,
+    get_execution_guidance,
     PERSISTENCE,
     METHODOLOGY,
     VULNERABILITY_FOCUS,
@@ -77,6 +78,7 @@ class PromptBuilder:
 
         # 2. Authorization (always)
         sections.append(AUTHORIZATION)
+        sections.append(get_execution_guidance())
 
         if self.agent_type in ["recon", "pentester"]:
             sections.append(TODO_LIST)
