@@ -44,7 +44,9 @@ def load_state():
         return cls(**{k: v for k, v in value.items() if k in names})
     for value in data.get('jobs', []):
         job = build(Job, value)
-        if job.status in {'running', 'queued', 'awaiting_review'}:
+        external = path.parent / 'external-jobs.json'
+        external_ids = json.loads(external.read_text()) if external.exists() else []
+        if job.status in {'running', 'queued', 'awaiting_review'} and job.id not in external_ids:
             job.status = 'failed'
             job.error = 'Execution interrupted by server restart; saved results preserved.'
         JOBS.put(job)
@@ -53,3 +55,19 @@ def load_state():
         for value in data.get(key, []):
             obj = build(cls, value)
             store[obj.id] = obj
+
+
+def import_completed_jobs():
+    """Consume local migration files, without exposing an import API."""
+    path = _path()
+    if path is None:
+        return
+    inbox = path.parent / 'migration-inbox'
+    for source in sorted(inbox.glob('*.json')):
+        value = json.loads(source.read_text())
+        if value.get('status') not in {'completed', 'failed', 'cancelled'}:
+            raise ValueError('Migration imports must be terminal jobs')
+        names = {f.name for f in fields(Job)} - _TRANSIENT
+        JOBS.put(Job(**{k: v for k, v in value.items() if k in names}))
+        save_state()
+        source.unlink()

@@ -99,6 +99,8 @@ async def restore_dashboard_state():
 
 @app.middleware("http")
 async def persist_dashboard_changes(request, call_next):
+    from .persistence import import_completed_jobs
+    import_completed_jobs()
     response = await call_next(request)
     if request.method in {"POST", "PATCH", "PUT", "DELETE"} and response.status_code < 400:
         from .persistence import save_state
