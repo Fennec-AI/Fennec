@@ -158,6 +158,10 @@ class HypothesisManager:
             self._handle_needs_info(hypothesis, result)
         elif result.status == "dead_end":
             self._handle_dead_end(hypothesis, result)
+        elif result.status == "refused":
+            hypothesis.status = HypothesisStatus.REFUSED
+            hypothesis.completed_at = datetime.now(timezone.utc)
+            hypothesis.refusal_reason = result.error or "Agent declined to perform the test"
 
         # Add new hypotheses as children
         for new_hyp_data in result.new_hypotheses:
@@ -410,6 +414,7 @@ class HypothesisManager:
             "completed": sum(1 for h in hypotheses if h.status == HypothesisStatus.COMPLETED),
             "blocked": sum(1 for h in hypotheses if h.status == HypothesisStatus.BLOCKED),
             "dead_end": sum(1 for h in hypotheses if h.status == HypothesisStatus.DEAD_END),
+            "refused": sum(1 for h in hypotheses if h.status == HypothesisStatus.REFUSED),
             "vulnerabilities": sum(1 for h in hypotheses if h.result == HypothesisResult.VULNERABLE),
             "queue_size": len(self.pending_queue),
             "blocked_count": len(self.blocked_list),

@@ -74,7 +74,7 @@ export interface HypothesisResult {
     id: string;
     title: string;
     description?: string;
-    status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'dead_end';
+    status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'dead_end' | 'refused';
     result: 'vulnerable' | 'safe' | 'inconclusive' | null;
     severity: 'critical' | 'high' | 'medium' | 'low' | 'info' | null;
     priority: number | string;
@@ -93,6 +93,7 @@ export interface HypothesisResult {
     created_at: string;
     started_at: string | null;
     completed_at: string | null;
+    refusal_reason?: string | null;
     color?: string;
 }
 

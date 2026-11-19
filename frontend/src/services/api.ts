@@ -41,6 +41,18 @@ export const findingsApi = {
       }),
 };
 
+export type ChatMessage = { role: 'user' | 'assistant'; content: string };
+export const contextChatApi = {
+  history: (scope: string, id: string) =>
+    fetchApi<{ messages: ChatMessage[] }>(`/chats/${scope}/${encodeURIComponent(id)}`),
+  send: (scope: string, id: string, message: string) =>
+    fetchApi<{ reply: string; messages: ChatMessage[] }>(`/chats/${scope}/${encodeURIComponent(id)}`, {
+      method: 'POST', body: JSON.stringify({ message }),
+    }),
+  clear: (scope: string, id: string) =>
+    fetchApi<{ messages: ChatMessage[] }>(`/chats/${scope}/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+};
+
 // Generic fetch wrapper with error handling
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   let response: Response;

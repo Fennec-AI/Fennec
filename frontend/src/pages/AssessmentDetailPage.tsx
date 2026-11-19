@@ -36,6 +36,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { RichFinding, HypothesisResult, ToolExecutionEvent } from '@/types';
 import type { ReconState } from '@/hooks/usePentestStream';
+import ContextChat from '@/components/chat/ContextChat';
 
 /* ---- Status helpers ---- */
 
@@ -172,17 +173,17 @@ export default function AssessmentDetailPage() {
         ...h,
         id: (h as unknown as { hypothesis_id?: string }).hypothesis_id || String(h.id),
         status: h.status as HypothesisResult['status'],
-        result: null,
-        severity: null,
-        parent_id: null,
-        children_ids: [],
+        result: h.result ?? null,
+        severity: h.severity ?? null,
+        parent_id: h.parent_id ?? null,
+        children_ids: h.children_ids ?? [],
         priority: h.priority ?? 'medium',
         required_agent: h.required_agent ?? 'pentester',
         skills: h.skills ?? [],
         owasp_category: h.owasp_category ?? undefined,
         created_at: h.created_at ?? '',
-        started_at: null,
-        completed_at: null,
+        started_at: h.started_at ?? null,
+        completed_at: h.completed_at ?? null,
       };
       return [mapped.id, mapped];
     }));
@@ -360,6 +361,7 @@ export default function AssessmentDetailPage() {
         {/* Tabbed Content */}
         <Tabs defaultValue="activity" className="w-full">
           <TabsList className="w-full justify-start">
+            <TabsTrigger value="chat">Chat IA</TabsTrigger>
             <TabsTrigger value="activity" className="gap-1.5">
               <Activity className="h-3.5 w-3.5" />
               Live Activity
@@ -387,6 +389,10 @@ export default function AssessmentDetailPage() {
               )}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="chat">
+            <ContextChat scope="assessment" contextId={testId || ''} title="Converse sobre este assessment" />
+          </TabsContent>
 
           {/* Live Activity Tab */}
           <TabsContent value="activity">
@@ -444,6 +450,7 @@ export default function AssessmentDetailPage() {
               </Card>
             ) : (
               <HypothesesPanel
+                assessmentId={testId || ''}
                 hypotheses={hypothesesRecord}
                 currentHypothesisId={streamHypotheses.currentHypothesisId}
                 statistics={streamHypotheses.statistics}

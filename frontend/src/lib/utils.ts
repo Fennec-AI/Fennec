@@ -121,7 +121,7 @@ export function getStatusBadgeClass(status: TestStatus): string {
 }
 
 // Hypothesis status type
-export type HypothesisStatus = 'pending' | 'in_progress' | 'completed' | 'blocked' | 'dead_end';
+export type HypothesisStatus = 'pending' | 'in_progress' | 'completed' | 'blocked' | 'dead_end' | 'refused';
 
 // Get hypothesis status badge class
 export function getHypothesisStatusBadgeClass(status: HypothesisStatus): string {
@@ -131,6 +131,7 @@ export function getHypothesisStatusBadgeClass(status: HypothesisStatus): string 
     completed: 'bg-fennec-green-600/20 text-fennec-green-400',
     blocked: 'bg-fennec-orange-600/20 text-fennec-orange-400',
     dead_end: 'bg-fennec-dark-700 text-fennec-dark-400',
+    refused: 'bg-orange-600/20 text-orange-400',
   };
   return classes[status] || classes.pending;
 }

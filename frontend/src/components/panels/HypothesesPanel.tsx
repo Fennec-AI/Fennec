@@ -22,6 +22,7 @@ import type { HypothesisResult, Task, StepRecord, BlockedHypothesis } from '@/ty
 import {Badge} from "@/components/ui/badge.tsx";
 
 interface HypothesesPanelProps {
+  assessmentId: string;
   hypotheses: Record<string, HypothesisResult>;
   currentHypothesisId: string | null;
   statistics: {
@@ -45,6 +46,7 @@ interface HypothesesPanelProps {
 }
 
 export function HypothesesPanel({
+  assessmentId,
   hypotheses,
   currentHypothesisId,
   statistics,
@@ -70,7 +72,7 @@ export function HypothesesPanel({
     return {
       all: hypothesesArray.length,
       active: hypothesesArray.filter(h => h.status === 'in_progress' || h.status === 'pending').length,
-      completed: hypothesesArray.filter(h => h.status === 'completed').length,
+      completed: hypothesesArray.filter(h => h.status === 'completed' || h.status === 'refused').length,
       blocked: hypothesesArray.filter(h => h.status === 'blocked').length,
       vulnerable: hypothesesArray.filter(h => h.result === 'vulnerable').length,
     };
@@ -86,7 +88,7 @@ export function HypothesesPanel({
         filtered = filtered.filter(h => h.status === 'in_progress' || h.status === 'pending');
         break;
       case 'completed':
-        filtered = filtered.filter(h => h.status === 'completed');
+        filtered = filtered.filter(h => h.status === 'completed' || h.status === 'refused');
         break;
       case 'blocked':
         filtered = filtered.filter(h => h.status === 'blocked');
@@ -119,7 +121,7 @@ export function HypothesesPanel({
       case 'priority':
         return sorted.sort((a, b) => Number(b.priority) - Number(a.priority));
       case 'status': {
-        const statusOrder = ['in_progress', 'pending', 'blocked', 'completed', 'dead_end'];
+        const statusOrder = ['in_progress', 'pending', 'blocked', 'completed', 'refused', 'dead_end'];
         return sorted.sort((a, b) => statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status));
       }
       case 'recent':
@@ -287,6 +289,7 @@ export function HypothesesPanel({
 
       {/* Detail Dialog */}
       <HypothesisDetailDialog
+        assessmentId={assessmentId}
         hypothesis={selectedHypothesisData}
         isOpen={selectedHypothesis !== null}
         onClose={() => setSelectedHypothesis(null)}

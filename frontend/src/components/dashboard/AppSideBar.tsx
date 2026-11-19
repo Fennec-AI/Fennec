@@ -5,6 +5,7 @@ import {
     ShieldAlert,
     Globe,
     Plus,
+    MessageCircle,
 } from 'lucide-react';
 import {
     Sidebar,
@@ -29,6 +30,7 @@ const navMain = [
     { title: 'Status', href: '/dashboard/status', icon: Activity },
     { title: 'Findings', href: '/dashboard/findings', icon: ShieldAlert },
     { title: 'Target Inventory', href: '/dashboard/targets', icon: Globe },
+    { title: 'AI Chat', href: '/dashboard/chats', icon: MessageCircle },
 ];
 
 /* ------------------------------------------------------------------ */

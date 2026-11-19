@@ -23,6 +23,7 @@ import { dashboardApi } from '@/services/api';
 import { AssessmentPhasesBar } from '@/components/dashboard/AssessmentPhasesBar';
 import { useTestRecon, useTestHypotheses } from '@/hooks/useDashboardData';
 import type { TestActivity } from '@/types';
+import ContextChat from '@/components/chat/ContextChat';
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '--';
@@ -127,6 +128,7 @@ export default function StatusPage() {
 
         {/* Live Workflow Area */}
         <LiveWorkflowArea firstRunningTest={runningTests[0] ?? null} />
+        <ContextChat scope="system" contextId="all" title="Converse com a IA sobre os assessments" />
 
         {/* Active Assessments */}
         <section>

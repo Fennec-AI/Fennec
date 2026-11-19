@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { HypothesisResult } from '@/types';
+import ContextChat from '@/components/chat/ContextChat';
 import {
   FlaskConical,
   Target,
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react';
 
 interface HypothesisDetailDialogProps {
+  assessmentId: string;
   hypothesis: HypothesisResult | null;
   isOpen: boolean;
   onClose: () => void;
@@ -35,6 +37,7 @@ interface HypothesisDetailDialogProps {
 }
 
 export function HypothesisDetailDialog({
+                                         assessmentId,
                                          hypothesis,
                                          isOpen,
                                          onClose,
@@ -68,6 +71,11 @@ export function HypothesisDetailDialog({
       icon: <XCircle className="h-3 w-3 mr-1" />,
       label: 'DEAD END',
     },
+    refused: {
+      color: 'text-orange-400 bg-orange-600/20 border-orange-500/30',
+      icon: <XCircle className="h-3 w-3 mr-1" />,
+      label: 'REFUSED',
+    },
   };
 
   const severityColors: Record<string, string> = {
@@ -94,7 +102,7 @@ export function HypothesisDetailDialog({
   };
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return 'Not started';
+    if (!dateStr) return 'Sem registro';
     const date = new Date(dateStr);
     return date.toLocaleString('en-US', {
       month: 'short',
@@ -148,7 +156,7 @@ export function HypothesisDetailDialog({
           </DialogHeader>
 
           <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4 bg-fennec-dark-800/50">
+            <TabsList className="grid w-full grid-cols-5 bg-fennec-dark-800/50">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="tasks">
                 Tasks {hypothesisTasks.length > 0 && <span className="ml-1 text-xs">({hypothesisTasks.length})</span>}
@@ -157,11 +165,21 @@ export function HypothesisDetailDialog({
                 Findings {hypothesis.findings && <span className="ml-1 text-xs">({hypothesis.findings.length})</span>}
               </TabsTrigger>
               <TabsTrigger value="data">Data I/O</TabsTrigger>
+              <TabsTrigger value="chat">Chat IA</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="chat" className="mt-6">
+              <ContextChat scope="hypothesis" contextId={`${assessmentId}:${hypothesis.id}`} title="Converse sobre esta hipótese" />
+            </TabsContent>
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6 mt-6">
               {/* Blocking Info - Show at top if blocked */}
+              {hypothesis.status === 'refused' && (
+                <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-300">
+                  Agent refused this test: {hypothesis.refusal_reason || 'No reason provided.'}
+                </div>
+              )}
               {hypothesis.blocked_by && (
                   <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
                     <div className="flex items-center gap-2 text-orange-400 font-medium mb-2">
@@ -189,7 +207,7 @@ export function HypothesisDetailDialog({
                 </div>
                 <div className="p-4 rounded-lg bg-fennec-dark-800/30 border border-fennec-dark-700">
                   <div className="text-xs text-fennec-dark-500 mb-1">Result</div>
-                  <div className="text-sm font-medium text-white mt-1">{hypothesis.result || 'Pending evaluation'}</div>
+                  <div className="text-sm font-medium text-white mt-1">{hypothesis.status === 'refused' ? 'Refused' : hypothesis.result || 'Pending evaluation'}</div>
                 </div>
                 <div className="p-4 rounded-lg bg-fennec-dark-800/30 border border-fennec-dark-700">
                   <div className="text-xs text-fennec-dark-500 mb-1">Hypothesis ID</div>

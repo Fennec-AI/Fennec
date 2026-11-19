@@ -41,6 +41,7 @@ export function HypothesisCard({
     completed: 'border-fennec-green-600 bg-fennec-green-900/10',
     blocked: 'border-fennec-orange-500 bg-fennec-orange-900/10',
     dead_end: 'border-fennec-dark-500 bg-fennec-dark-900/20',
+    refused: 'border-orange-500 bg-orange-900/10',
   };
 
   const statusIcons: Record<string, React.ReactNode> = {
@@ -49,6 +50,7 @@ export function HypothesisCard({
     completed: <CheckCircle2 className="h-5 w-5 text-fennec-green-400" />,
     blocked: <AlertTriangle className="h-5 w-5 text-fennec-orange-400" />,
     dead_end: <AlertTriangle className="h-5 w-5 text-fennec-dark-500" />,
+    refused: <AlertTriangle className="h-5 w-5 text-orange-400" />,
   };
 
   const severityColors: Record<string, string> = {
