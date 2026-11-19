@@ -224,7 +224,7 @@ Everything is `.env`-driven. The knobs that matter:
 | `LLM_PROVIDER` | Primary provider: `anthropic` (default), `openai`, `openrouter`, `gemini`, or `nvidia` |
 | `LLM_MODEL` | Model name for the primary provider (defaults: `claude-sonnet-4-6`, `gpt-4.1`, `gemini-2.5-pro`, `meta/llama-3.3-70b-instruct` for NVIDIA) |
 | `LLM_FALLBACKS` | Optional comma-separated chain tried when the primary model errors, e.g. `gemini,nvidia:meta/llama-3.3-70b-instruct` |
-| `RECON_LLM_MODEL` / `ANALYST_LLM_MODEL` / `PENTESTER_LLM_MODEL` | Optional per-agent model; `provider:model` (e.g. `gemini:gemini-2.5-flash`) runs that agent on another provider |
+| `RECON_LLM_MODEL` / `ANALYST_LLM_MODEL` / `PENTESTER_LLM_MODEL` | Optional per-agent model; `provider:model` (e.g. `gemini:gemini-2.5-pro`) runs that agent on another provider |
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` / `GEMINI_API_KEY` / `NVIDIA_API_KEY` | Set the key for every provider you use; several can be set at once (`GOOGLE_API_KEY` is accepted for Gemini, `NVIDIA_BASE_URL` points at a self-hosted NIM) |
 | `DOCKER_IMAGE` | Kali image tag (default `fennec-linux`, built by `linux/Makefile`) |
 | `EXECUTION_MODE` | `docker` (default — spawn a Kali sibling per scan) or `local` (run tools in the agent container directly) |

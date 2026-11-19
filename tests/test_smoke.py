@@ -68,7 +68,7 @@ def fresh_config(monkeypatch):
 
 def test_model_spec_parsing(fresh_config):
     settings = fresh_config
-    assert settings.parse_model_spec("gemini:gemini-2.5-flash") == ("gemini", "gemini-2.5-flash")
+    assert settings.parse_model_spec("gemini:gemini-2.5-pro") == ("gemini", "gemini-2.5-pro")
     assert settings.parse_model_spec("nvidia") == ("nvidia", settings.DEFAULT_MODELS["nvidia"])
     assert settings.parse_model_spec("nvidia:meta/llama-3.3-70b-instruct") == ("nvidia", "meta/llama-3.3-70b-instruct")
     # Unknown prefixes are part of the model id (OpenRouter ":free" variants).
@@ -93,7 +93,7 @@ def test_multiple_providers_and_fallbacks(fresh_config, monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "anthropic")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "a")
     monkeypatch.setenv("GEMINI_API_KEY", "g")
-    monkeypatch.setenv("LLM_FALLBACKS", "gemini:gemini-2.5-flash, nvidia, openai")
+    monkeypatch.setenv("LLM_FALLBACKS", "gemini:gemini-2.5-pro, nvidia, openai")
     monkeypatch.setenv("RECON_LLM_MODEL", "nvidia:meta/llama-3.3-70b-instruct")
     cfg = settings.get_config()
 

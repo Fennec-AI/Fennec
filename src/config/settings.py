@@ -256,7 +256,7 @@ def get_default_llm():
 def parse_model_spec(spec: str, default_provider: Optional[str] = None) -> tuple[str, str]:
     """Split a model spec into ``(provider, model)``.
 
-    ``"gemini:gemini-2.5-flash"`` -> ``("gemini", "gemini-2.5-flash")``;
+    ``"gemini:gemini-2.5-pro"`` -> ``("gemini", "gemini-2.5-pro")``;
     ``"nvidia"`` -> ``("nvidia", <its default model>)``; anything else is a
     bare model name for ``LLM_PROVIDER``. Only a known provider name counts as
     a prefix, so OpenRouter ids like ``"mistralai/mistral-7b:free"`` stay intact.
