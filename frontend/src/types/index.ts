@@ -94,6 +94,7 @@ export interface HypothesisResult {
     started_at: string | null;
     completed_at: string | null;
     refusal_reason?: string | null;
+    termination_reason?: string | null;
     color?: string;
 }
 

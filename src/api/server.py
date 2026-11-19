@@ -922,7 +922,8 @@ def _context_chat_data(scope: str, context_id: str) -> dict:
             return {"hypotheses": [
                 {"id": h.get("id"), "title": h.get("title"),
                  "status": h.get("status"), "result": h.get("result"),
-                 "refusal_reason": h.get("refusal_reason")}
+                 "refusal_reason": h.get("refusal_reason"),
+                 "termination_reason": h.get("termination_reason") or h.get("error")}
                 for h in job.hypotheses[:100]], **base}
         if scope == "hypothesis" and hypothesis_id:
             hypothesis = next((h for h in job.hypotheses if h.get("id") == hypothesis_id), None)

@@ -162,6 +162,9 @@ class HypothesisManager:
             hypothesis.status = HypothesisStatus.REFUSED
             hypothesis.completed_at = datetime.now(timezone.utc)
             hypothesis.refusal_reason = result.error or "Agent declined to perform the test"
+            hypothesis.termination_reason = hypothesis.refusal_reason
+            for output in hypothesis.expected_outputs:
+                self.pending_outputs.pop(output, None)
 
         # Add new hypotheses as children
         for new_hyp_data in result.new_hypotheses:
@@ -248,6 +251,9 @@ class HypothesisManager:
         """Handle a hypothesis that cannot proceed."""
         hypothesis.status = HypothesisStatus.DEAD_END
         hypothesis.completed_at = datetime.now(timezone.utc)
+        hypothesis.termination_reason = result.error or "; ".join(result.internal_steps or result.findings) or (
+            "Agent ended the investigation without reporting a reason."
+        )
 
         logger.info(f"Hypothesis {hypothesis.id} is a dead end: {result.error}")
 

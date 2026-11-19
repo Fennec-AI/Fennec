@@ -120,6 +120,7 @@ class Hypothesis:
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     refusal_reason: Optional[str] = None
+    termination_reason: Optional[str] = None
 
     # === UI Properties ===
     @property
@@ -177,6 +178,7 @@ class Hypothesis:
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "refusal_reason": self.refusal_reason,
+            "termination_reason": self.termination_reason,
             "color": self.color,
         }
 
@@ -206,6 +208,7 @@ class Hypothesis:
             started_at=datetime.fromisoformat(data["started_at"]) if data.get("started_at") else None,
             completed_at=datetime.fromisoformat(data["completed_at"]) if data.get("completed_at") else None,
             refusal_reason=data.get("refusal_reason"),
+            termination_reason=data.get("termination_reason") or data.get("error"),
         )
 
 

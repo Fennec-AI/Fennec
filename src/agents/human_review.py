@@ -13,6 +13,7 @@ new hypotheses, and optional guidance notes.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 
 from langgraph.types import interrupt
 
@@ -72,6 +73,8 @@ def _apply_edits(hypothesis_manager_dict: dict, user_edits: dict) -> dict:
         if edit["action"] == "reject":
             logger.info(f"Rejecting hypothesis '{hyp.title}' ({hyp_id})")
             hyp.status = HypothesisStatus.DEAD_END
+            hyp.completed_at = datetime.now(timezone.utc)
+            hyp.termination_reason = "Hypothesis rejected by the operator during human review."
             if hyp.id in manager.pending_queue:
                 manager.pending_queue.remove(hyp.id)
         else:  # approve

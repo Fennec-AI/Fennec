@@ -180,6 +180,11 @@ export function HypothesisDetailDialog({
                   Agent refused this test: {hypothesis.refusal_reason || 'No reason provided.'}
                 </div>
               )}
+              {hypothesis.status === 'dead_end' && (
+                <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-300 whitespace-pre-wrap">
+                  Motivo do encerramento: {hypothesis.termination_reason || 'O motivo não foi registrado nesta execução.'}
+                </div>
+              )}
               {hypothesis.blocked_by && (
                   <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
                     <div className="flex items-center gap-2 text-orange-400 font-medium mb-2">
