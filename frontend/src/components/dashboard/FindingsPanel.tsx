@@ -38,10 +38,10 @@ const severityColors: Record<Severity, { bg: string; text: string; border: strin
     badgeBg: 'bg-yellow-600/30',
   },
   low: {
-    bg: 'bg-blue-600/20',
-    text: 'text-blue-400',
-    border: 'border-blue-600/30',
-    badgeBg: 'bg-blue-600/30',
+    bg: 'bg-green-600/20',
+    text: 'text-green-400',
+    border: 'border-green-600/30',
+    badgeBg: 'bg-green-600/30',
   },
   info: {
     bg: 'bg-fennec-dark-600/50',
@@ -176,7 +176,7 @@ function FindingCard({ finding, severity }: FindingCardProps) {
       )}
 
       {finding.created_at && (
-        <div className="mt-2 flex items-center gap-2 text-xs text-fennec-dark-600">
+        <div className="mt-2 flex items-center gap-2 text-xs text-fennec-dark-500">
           <span>{new Date(finding.created_at).toLocaleString()}</span>
         </div>
       )}

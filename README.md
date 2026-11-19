@@ -41,7 +41,7 @@ There is a [hosted version at fenneclabs.ai](https://fenneclabs.ai) with team fe
 ## Requirements
 
 - Docker Desktop (or Docker Engine ≥ 20.10)
-- An LLM API key — one of **Anthropic** (recommended), **OpenAI**, or **OpenRouter**
+- An LLM API key — one of **Anthropic** (recommended), **OpenAI**, **Google Gemini**, **NVIDIA**, or **OpenRouter** (you can configure several at once)
 - ~15 GB free disk for the Kali execution image (built once)
 - Python 3.11+ only if you want to skip Docker for the agent itself and run the CLI directly
 
@@ -211,7 +211,7 @@ Once the stack is up:
 
 5. **Watch the agents work.** The Status page streams live events: recon results, hypotheses being formed, tool calls (nmap, curl, sqlmap, custom payloads), and findings as they're confirmed. The hypothesis tree shows what's pending / in-progress / vulnerable / safe.
 
-6. **Review findings.** Open **Findings** in the sidebar to see confirmed vulnerabilities grouped by severity. Click any finding to drill into the evidence: the exact request that triggered it, the response observed, the OWASP category, the suggested fix, and the full reasoning trail.
+6. **Review findings.** Open **Findings** in the sidebar to filter by site, scan, severity, or text. Each finding shows the recorded request/response, textual evidence, payloads, reproduction steps, commands, impact, and remediation. **Refazer** opens Create with the source scan's settings filled in, for review before starting a new scan. Use the chat panel to ask the configured LLM about the selected finding; chat history is saved per finding in the server's local SQLite database and can be cleared with **Limpar**. Configure an LLM API key to enable chat. The database defaults to `data/finding_chats.sqlite3` (`FENNEC_CHAT_DB_PATH` can change it). Docker Compose mounts `./data` and enables dashboard snapshots, so both chats and their associated scans survive container recreation. For a local API launch, set `FENNEC_DATA_DIR=data` to retain scans across restarts as well.
 
 7. **Export.** Each finding has a JSON export. The agents also dump a Markdown report under `./reports/<timestamp>_<host>/summary.md` for the CLI flow.
 
@@ -221,9 +221,11 @@ Everything is `.env`-driven. The knobs that matter:
 
 | Variable | What it does |
 |---|---|
-| `LLM_PROVIDER` | `anthropic` (default), `openai`, or `openrouter` |
-| `LLM_MODEL` | Model name for the provider (default `claude-sonnet-4-6`) |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` | One must be set, matching `LLM_PROVIDER` |
+| `LLM_PROVIDER` | Primary provider: `anthropic` (default), `openai`, `openrouter`, `gemini`, or `nvidia` |
+| `LLM_MODEL` | Model name for the primary provider (defaults: `claude-sonnet-4-6`, `gpt-4.1`, `gemini-2.5-pro`, `meta/llama-3.3-70b-instruct` for NVIDIA) |
+| `LLM_FALLBACKS` | Optional comma-separated chain tried when the primary model errors, e.g. `gemini,nvidia:meta/llama-3.3-70b-instruct` |
+| `RECON_LLM_MODEL` / `ANALYST_LLM_MODEL` / `PENTESTER_LLM_MODEL` | Optional per-agent model; `provider:model` (e.g. `gemini:gemini-2.5-pro`) runs that agent on another provider |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` / `GEMINI_API_KEY` / `NVIDIA_API_KEY` | Set the key for every provider you use; several can be set at once (`GOOGLE_API_KEY` is accepted for Gemini, `NVIDIA_BASE_URL` points at a self-hosted NIM) |
 | `DOCKER_IMAGE` | Kali image tag (default `fennec-linux`, built by `linux/Makefile`) |
 | `EXECUTION_MODE` | `docker` (default — spawn a Kali sibling per scan) or `local` (run tools in the agent container directly) |
 | `FENNEC_METHOD` | `turbo` / `balanced` / `deep` |
@@ -317,6 +319,7 @@ Issues and PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev 
 - `python -m compileall src` should pass (and `pip install -e .[test] && pytest`)
 - New tools belong in `src/tools/` with a Pydantic input schema
 - New agents need an entry in `AgentType`, a router branch in `src/graph/`, and a prompt in `src/prompts/`
+- Shared agent rules live in `src/prompts/AGENT.md` and are read whenever a new recon, analyst, pentester, or coder prompt is built. That file includes the original `prompt/AGENT.md` text; Fennec's target scope, role rules, and structured output schemas take precedence over conflicting clauses.
 - Don't add proprietary services, telemetry, or auth gates — OSS stays vendor-neutral
 
 ## License

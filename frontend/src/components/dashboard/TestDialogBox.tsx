@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Terminal,
@@ -23,15 +23,24 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePentestContext } from '@/contexts/PentestContext';
-import { targetApi, credentialApi } from '@/services/api';
-import type { Target, Credential } from '@/types';
+import { targetApi, credentialApi, pentestApi } from '@/services/api';
+import type { Target, Credential, JobResponse } from '@/types';
 
 interface TestDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    prefillJobId?: string | null;
 }
 
-export function TestDialog({ open, onOpenChange }: TestDialogProps) {
+function hostOf(value: string): string {
+    try {
+        return new URL(value.includes('://') ? value : `https://${value}`).hostname.toLowerCase();
+    } catch {
+        return value.toLowerCase();
+    }
+}
+
+export function TestDialog({ open, onOpenChange, prefillJobId }: TestDialogProps) {
     const navigate = useNavigate();
 
     // Form state
@@ -40,6 +49,11 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
     const [method, setMethod] = useState<'turbo' | 'balanced' | 'deep'>('balanced');
     const [frequency, setFrequency] = useState<string>('none');
     const [localError, setLocalError] = useState('');
+    const [originalJob, setOriginalJob] = useState<JobResponse | null>(null);
+    const [prefillLoading, setPrefillLoading] = useState(false);
+    const [credentialNeedsReview, setCredentialNeedsReview] = useState(false);
+    const [started, setStarted] = useState(false);
+    const pendingCredentialId = useRef<string | null>(null);
 
     // Data state
     const [targets, setTargets] = useState<Target[]>([]);
@@ -53,18 +67,17 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
         connectionStatus,
         testStatus,
         error: streamError,
-        reset,
     } = usePentestContext();
 
     const isLoading =
-        connectionStatus === 'connecting' ||
-        (connectionStatus === 'connected' && testStatus === 'running');
+        started && (connectionStatus === 'connecting' ||
+        (connectionStatus === 'connected' && testStatus === 'running'));
 
     // Navigate when sessionId is set and we're connected (not on error)
     // Only fires while the dialog is open — prevents yanking the user back to
     // the status page when they navigate elsewhere with an active session.
     useEffect(() => {
-        if (!open) return;
+        if (!open || !started) return;
         // As soon as the backend returns a job id (sessionId), the assessment
         // HAS started — close the dialog and jump to the live status page.
         // Previously this was gated on testStatus === 'running', which the OSS
@@ -77,7 +90,7 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
             }, 600);
             return () => clearTimeout(timer);
         }
-    }, [open, sessionId, streamError, connectionStatus, navigate, onOpenChange]);
+    }, [open, started, sessionId, streamError, connectionStatus, navigate, onOpenChange]);
 
     // Reset state when dialog opens
     useEffect(() => {
@@ -88,20 +101,47 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
             setFrequency('none');
             setLocalError('');
             setCredentials([]);
-            reset();
+            setOriginalJob(null);
+            setCredentialNeedsReview(false);
+            setStarted(false);
+            pendingCredentialId.current = null;
         }
-    }, [open, reset]);
+    }, [open]);
 
-    // Load targets when dialog opens
+    // Load the Create choices and the original test before filling the form.
     useEffect(() => {
         if (!open) return;
+        let active = true;
         setTargetsLoading(true);
-        targetApi
-            .list()
-            .then(setTargets)
-            .catch((err) => console.error('Failed to load targets:', err))
-            .finally(() => setTargetsLoading(false));
-    }, [open]);
+        setPrefillLoading(Boolean(prefillJobId));
+        Promise.all([
+            targetApi.list(),
+            prefillJobId ? pentestApi.getJob(prefillJobId) : Promise.resolve(null),
+        ]).then(([availableTargets, job]) => {
+            if (!active) return;
+            setTargets(availableTargets);
+            if (!job) return;
+            setOriginalJob(job);
+            if (['turbo', 'balanced', 'deep'].includes(job.method)) {
+                setMethod(job.method as 'turbo' | 'balanced' | 'deep');
+            }
+            setFrequency(['daily', 'weekly', 'monthly'].includes(job.frequency || '')
+                ? job.frequency! : 'none');
+            const target = availableTargets.find(t => t.id === job.target_id)
+                ?? availableTargets.find(t => hostOf(t.domain) === hostOf(job.target_url));
+            if (!target) {
+                setLocalError('O alvo original não está mais cadastrado. Cadastre-o para refazer o teste.');
+                return;
+            }
+            pendingCredentialId.current = job.credential_id;
+            setSelectedTargetId(target.id);
+        }).catch(err => {
+            if (active) setLocalError(err instanceof Error ? err.message : 'Não foi possível carregar o teste original.');
+        }).finally(() => {
+            if (active) { setTargetsLoading(false); setPrefillLoading(false); }
+        });
+        return () => { active = false; };
+    }, [open, prefillJobId]);
 
     // Load credentials when target changes
     useEffect(() => {
@@ -110,19 +150,48 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
             setSelectedCredentialId('');
             return;
         }
+        let active = true;
         setCredentialsLoading(true);
         setSelectedCredentialId('');
         credentialApi
             .list(selectedTargetId)
-            .then(setCredentials)
+            .then(available => {
+                if (!active) return;
+                setCredentials(available);
+                const preferred = pendingCredentialId.current;
+                pendingCredentialId.current = null;
+                if (preferred) {
+                    if (available.some(item => item.id === preferred)) {
+                        setSelectedCredentialId(preferred);
+                    } else {
+                        setCredentialNeedsReview(true);
+                        setLocalError('A credencial original não está mais disponível. Escolha uma credencial ou “None” para continuar.');
+                    }
+                }
+            })
             .catch((err) => {
+                if (!active) return;
                 console.error('Failed to load credentials:', err);
                 setCredentials([]);
+                if (pendingCredentialId.current) {
+                    pendingCredentialId.current = null;
+                    setCredentialNeedsReview(true);
+                    setLocalError('Não foi possível confirmar a credencial original. Selecione uma credencial antes de continuar.');
+                }
             })
-            .finally(() => setCredentialsLoading(false));
+            .finally(() => { if (active) setCredentialsLoading(false); });
+        return () => { active = false; };
     }, [selectedTargetId]);
 
     const handleStartTest = async () => {
+        if (prefillJobId && !originalJob) {
+            setLocalError('Não foi possível carregar a configuração original. Feche e abra o formulário novamente.');
+            return;
+        }
+        if (credentialNeedsReview) {
+            setLocalError('Escolha uma credencial antes de continuar.');
+            return;
+        }
         if (!selectedTargetId) {
             setLocalError('Please select a target domain');
             return;
@@ -134,7 +203,8 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
             return;
         }
 
-        let targetUrl = target.domain;
+        let targetUrl = originalJob && hostOf(originalJob.target_url) === hostOf(target.domain)
+            ? originalJob.target_url : target.domain;
         if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
             targetUrl = `https://${targetUrl}`;
         }
@@ -146,23 +216,27 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
         const freq = frequency && frequency !== 'none'
             ? (frequency as 'daily' | 'weekly' | 'monthly')
             : null;
+        setStarted(true);
         await startStream(
             targetUrl,
-            `Assessment - ${target.name}`,
-            undefined,
-            undefined,
+            originalJob?.name ?? `Assessment - ${target.name}`,
+            originalJob?.description ?? undefined,
+            originalJob?.htli,
             {
                 target_id: target.id,
-                credential_id: selectedCredentialId || undefined,
+                credential_id: selectedCredentialId && selectedCredentialId !== 'none'
+                    ? selectedCredentialId : undefined,
                 method,
                 frequency: freq,
+                mode: originalJob?.mode === 'white_box' ? 'white_box' : 'black_box',
+                timeout_seconds: originalJob?.timeout_seconds,
             },
         );
     };
 
-    const error = localError || streamError;
+    const error = localError || (started ? streamError : null);
     const status =
-        connectionStatus === 'connecting'
+        !started ? '' : connectionStatus === 'connecting'
             ? 'Initializing...'
             : connectionStatus === 'connected' && sessionId
                 ? 'Test started! Redirecting...'
@@ -171,13 +245,21 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>Configure Continuous Testing</DialogTitle>
+                    <DialogTitle>{prefillJobId ? 'Refazer avaliação' : 'Configure Continuous Testing'}</DialogTitle>
                     <DialogDescription>
-                        Set up the parameters of your penetration test which will be used to guide the AI agents.
+                        {prefillJobId
+                            ? 'Revise as configurações do teste original antes de iniciar uma nova avaliação.'
+                            : 'Set up the parameters of your penetration test which will be used to guide the AI agents.'}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-4 pt-2">
+                    {prefillLoading && <p className="text-sm text-muted-foreground">Carregando configuração original…</p>}
+                    {originalJob && <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+                        <p className="font-medium text-foreground">Teste original: {originalJob.name}</p>
+                        <p>Modo: {originalJob.mode} · Revisão humana: {originalJob.htli ? 'sim' : 'não'} · Timeout: {originalJob.timeout_seconds}s</p>
+                        {originalJob.description && <p className="mt-1">Descrição: {originalJob.description}</p>}
+                    </div>}
                     {/* Target Domain */}
                     <div>
                         <label className="text-sm font-medium mb-1.5 block">
@@ -186,10 +268,12 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
                         <Select
                             value={selectedTargetId}
                             onValueChange={(val) => {
+                                pendingCredentialId.current = null;
                                 setSelectedTargetId(val);
                                 setLocalError('');
+                                setCredentialNeedsReview(false);
                             }}
-                            disabled={isLoading}
+                            disabled={isLoading || prefillLoading}
                         >
                             <SelectTrigger>
                                 <SelectValue
@@ -226,8 +310,12 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
                         </label>
                         <Select
                             value={selectedCredentialId}
-                            onValueChange={setSelectedCredentialId}
-                            disabled={isLoading || !selectedTargetId}
+                            onValueChange={value => {
+                                setSelectedCredentialId(value);
+                                setCredentialNeedsReview(false);
+                                setLocalError('');
+                            }}
+                            disabled={isLoading || prefillLoading || credentialsLoading || !selectedTargetId}
                         >
                             <SelectTrigger>
                                 <SelectValue
@@ -263,7 +351,7 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
                                     key={m}
                                     type="button"
                                     onClick={() => setMethod(m)}
-                                    disabled={isLoading}
+                                    disabled={isLoading || prefillLoading}
                                     className={`flex flex-col items-center gap-1 rounded-md border p-3 text-sm transition-colors ${
                                         method === m
                                             ? 'border-primary bg-primary/10 text-primary'
@@ -292,7 +380,7 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
                         <Select
                             value={frequency}
                             onValueChange={setFrequency}
-                            disabled={isLoading}
+                            disabled={isLoading || prefillLoading}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="None" />
@@ -309,7 +397,7 @@ export function TestDialog({ open, onOpenChange }: TestDialogProps) {
                     {/* Start Button */}
                     <Button
                         onClick={handleStartTest}
-                        disabled={isLoading || !selectedTargetId}
+                        disabled={isLoading || prefillLoading || targetsLoading || credentialsLoading || credentialNeedsReview || !selectedTargetId || Boolean(prefillJobId && !originalJob)}
                         className="w-full"
                     >
                         {isLoading ? (

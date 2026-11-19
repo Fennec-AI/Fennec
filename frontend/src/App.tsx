@@ -9,6 +9,7 @@ import PrivateLayout from "@/layouts/PrivateLayout";
 import { PentestProvider } from "@/contexts/PentestContext";
 import type { RawEventCallback } from "@/hooks/usePentestStream";
 import NotFoundPage from "@/pages/NotFoundPage";
+import SystemChatPage from "@/pages/SystemChatPage";
 
 function App() {
     // Central event handler that can be accessed by components
@@ -63,6 +64,7 @@ function App() {
                     <Route path="status/:testId" element={<AssessmentDetailPage />} />
                     <Route path="findings" element={<FindingsPage />} />
                     <Route path="targets" element={<TargetInventoryPage />} />
+                    <Route path="chats" element={<SystemChatPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                 </Route>
 

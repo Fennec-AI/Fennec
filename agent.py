@@ -309,6 +309,8 @@ async def run_pentest(
         llm_pentester = create_llm(config.pentester_llm_model) if config.pentester_llm_model else None
 
         logger.info(f"LLM initialized: {config.llm_provider}/{config.llm_model}")
+        if config.llm_fallbacks:
+            logger.info(f"  Fallbacks: {config.llm_fallbacks}")
         if config.recon_llm_model:
             logger.info(f"  Recon LLM: {config.recon_llm_model}")
         if config.analyst_llm_model:
@@ -697,10 +699,14 @@ async def run_pentest(
                 entry = {
                     "title": title,
                     "hypothesis_id": hid,
+                    "hypothesis_title": hyp.get("title"),
+                    "hypothesis_description": hyp.get("description"),
                     "tasks": hyp.get("tasks") or [],
                     **detail,
                 }
                 entry.setdefault("severity", hyp.get("severity") or "info")
+                if not entry.get("owasp_category"):
+                    entry["owasp_category"] = hyp.get("owasp_category") or None
                 rich_findings.append(entry)
         result.vulnerabilities = vuln_titles
         result.rich_findings = rich_findings

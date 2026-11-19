@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Finding chat history now persists in a local SQLite database and reloads from the server; existing browser history is imported once.
+
+### Added
+- **Refazer** on finding and scan details opens Create prefilled with the original scan settings.
+- Findings filters by site, scan, severity, and search; complete per-finding evidence and reproduction details; read-only AI chat about the selected finding
+- Finding detail and facet API endpoints, plus a stateless per-finding chat endpoint
+- Google Gemini as an LLM provider: `LLM_PROVIDER=gemini` with `GEMINI_API_KEY` (or `GOOGLE_API_KEY`), via `langchain-google-genai`; `LLM_MODEL` defaults per provider when unset
+- NVIDIA as an LLM provider (`LLM_PROVIDER=nvidia`, `NVIDIA_API_KEY`, optional `NVIDIA_BASE_URL` for self-hosted NIM)
+- Multiple providers at once: `LLM_FALLBACKS` chain used when the primary model errors, and `provider:model` specs for per-agent overrides
+
+### Changed
+- Reproduction guidance now asks for clear Portuguese action steps grounded in recorded evidence; the detail tab shows prerequisites, numbered actions, and the confirming result.
+- All LLM construction goes through `src.config.settings.create_llm` (the CLI no longer builds its own clients)
+
 ## [0.2.0] - 2026-06-30
 
 ### Added

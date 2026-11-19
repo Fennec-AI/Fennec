@@ -11,7 +11,10 @@ services:
       - PYTHONPATH=/app
       # LLM Configuration
       - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
-      - LLM_MODEL=${LLM_MODEL:-claude-sonnet-4-20250514}
+      - LLM_MODEL=${LLM_MODEL:-}
+      - RECON_LLM_MODEL=${RECON_LLM_MODEL:-}
+      - ANALYST_LLM_MODEL=${ANALYST_LLM_MODEL:-}
+      - PENTESTER_LLM_MODEL=${PENTESTER_LLM_MODEL:-}
       # Robustness: the OSS default (60s / 2 retries) is too low for the rich
       # analyst/pentester structured-output calls — they time out and get
       # silently dropped, producing 0 hypotheses. Production uses 180/4.
@@ -21,6 +24,10 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+      - NVIDIA_BASE_URL=${NVIDIA_BASE_URL:-}
+      - LLM_FALLBACKS=${LLM_FALLBACKS:-}
       # Search API Keys (optional)
       - FENNEC_TAVILY_API_KEY=${TAVILY_API_KEY}
       - FENNEC_PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
@@ -30,6 +37,8 @@ services:
       # synthetic data on startup (useful for previewing the UI without
       # running a real scan).
       - FENNEC_DEMO_SEED=${FENNEC_DEMO_SEED:-}
+      - FENNEC_CHAT_DB_PATH=${FENNEC_CHAT_DB_PATH:-data/finding_chats.sqlite3}
+      - FENNEC_DATA_DIR=/app/data
       # LangChain / LangSmith tracing (pass-through from host .env)
       - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-}
       - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
@@ -42,6 +51,8 @@ services:
     volumes:
       # Mount Docker socket for spawning pentest containers
       - /var/run/docker.sock:/var/run/docker.sock
+      # Keep chat history when the backend container is recreated.
+      - ./data:/app/data
     # Resolve host.docker.internal to the host machine. Docker Desktop adds
     # this automatically, but Linux Docker Engine requires the explicit
     # extra_hosts entry below. Needed so the agent can target services

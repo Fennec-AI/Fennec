@@ -32,6 +32,8 @@ async def publish(job: Job, event_type: str, data: dict[str, Any]) -> None:
     publisher — the dashboard tolerates gaps better than it tolerates
     deadlocks.
     """
+    from .persistence import save_state
+    save_state()
     payload = {"type": event_type, **data, "session_id": job.id, "timestamp": _now()}
     dead: list[asyncio.Queue] = []
     for q in job.subscribers:

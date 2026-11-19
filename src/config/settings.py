@@ -2,17 +2,31 @@
 Configuration settings using pydantic-settings.
 """
 
+import logging
 import os
 from functools import lru_cache
 from typing import Literal, Optional
 
 from dotenv import load_dotenv
-from pydantic import field_validator
+from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load .env into os.environ so validators and get_default_llm() work
 # regardless of how the app is launched (CLI, API, LangGraph Studio).
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+
+# Model used when LLM_MODEL is not set, per provider.
+DEFAULT_MODELS = {
+    "anthropic": "claude-sonnet-4-6",
+    "openai": "gpt-4.1",
+    "openrouter": "anthropic/claude-sonnet-4.6",
+    "gemini": "gemini-2.5-pro",
+    "nvidia": "meta/llama-3.3-70b-instruct",
+}
+PROVIDERS = tuple(DEFAULT_MODELS)
 
 
 class FennecConfig(BaseSettings):
@@ -26,8 +40,9 @@ class FennecConfig(BaseSettings):
     )
 
     # LLM Configuration
-    llm_provider: Literal["anthropic", "openai", "openrouter"] = "anthropic"
-    llm_model: str = "claude-sonnet-4-6"
+    llm_provider: Literal["anthropic", "openai", "openrouter", "gemini", "nvidia"] = "anthropic"
+    # Empty → per-provider default from DEFAULT_MODELS (see get_llm_model).
+    llm_model: str = Field(default="", validate_default=True)
     openrouter_api_key: Optional[str] = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
@@ -42,12 +57,14 @@ class FennecConfig(BaseSettings):
 
     @field_validator("llm_model", mode="before")
     @classmethod
-    def get_llm_model(cls, v):
+    def get_llm_model(cls, v, info: ValidationInfo):
         # Prioritize env var without prefix
         env_val = os.environ.get("LLM_MODEL")
         if env_val:
             return env_val
-        return v or "claude-sonnet-4-6"
+        if v:
+            return v
+        return DEFAULT_MODELS.get(info.data.get("llm_provider"), "claude-sonnet-4-6")
 
     @field_validator("openrouter_api_key", mode="before")
     @classmethod
@@ -58,7 +75,20 @@ class FennecConfig(BaseSettings):
             return env_val
         return v
 
-    # Per-agent model overrides (fall back to llm_model if not set)
+    # Fallback chain: comma-separated model specs tried in order when the
+    # primary model errors (rate limit, outage, timeout...). Each entry is
+    # "provider:model" or just "provider" (uses that provider's default model),
+    # e.g. LLM_FALLBACKS=gemini,nvidia:meta/llama-3.3-70b-instruct
+    llm_fallbacks: str = ""
+
+    @field_validator("llm_fallbacks", mode="before")
+    @classmethod
+    def get_llm_fallbacks(cls, v):
+        return os.environ.get("LLM_FALLBACKS") or v or ""
+
+    # Per-agent model overrides (fall back to llm_model if not set).
+    # They accept the same "provider:model" spec, so each agent can run on a
+    # different provider than LLM_PROVIDER.
     recon_llm_model: Optional[str] = None
     analyst_llm_model: Optional[str] = None
     pentester_llm_model: Optional[str] = None
@@ -85,9 +115,16 @@ class FennecConfig(BaseSettings):
     # Provider/client-level retries for transient failures.
     llm_max_retries: int = 2
 
+    # Durable local history for finding chat (relative to the API working directory).
+    chat_db_path: str = "data/finding_chats.sqlite3"
+
     # API Keys - also read from standard env vars
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
+    nvidia_api_key: Optional[str] = None
+    # NVIDIA API catalog (build.nvidia.com); point at your own NIM to self-host.
+    nvidia_base_url: str = "https://integrate.api.nvidia.com/v1"
 
     @field_validator("anthropic_api_key", mode="before")
     @classmethod
@@ -98,6 +135,43 @@ class FennecConfig(BaseSettings):
     @classmethod
     def get_openai_key(cls, v):
         return v or os.environ.get("OPENAI_API_KEY")
+
+    @field_validator("gemini_api_key", mode="before")
+    @classmethod
+    def get_gemini_key(cls, v):
+        # GOOGLE_API_KEY is the name the Google GenAI SDK itself falls back to.
+        return v or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+
+    @field_validator("nvidia_api_key", mode="before")
+    @classmethod
+    def get_nvidia_key(cls, v):
+        return v or os.environ.get("NVIDIA_API_KEY")
+
+    @field_validator("nvidia_base_url", mode="before")
+    @classmethod
+    def get_nvidia_base_url(cls, v):
+        return os.environ.get("NVIDIA_BASE_URL") or v
+
+    def provider_api_key(self, provider: Optional[str] = None) -> Optional[str]:
+        """API key for ``provider`` (default: ``llm_provider``); None if unset."""
+        return {
+            "anthropic": self.anthropic_api_key,
+            "openai": self.openai_api_key,
+            "openrouter": self.openrouter_api_key,
+            "gemini": self.gemini_api_key,
+            "nvidia": self.nvidia_api_key,
+        }.get(provider or self.llm_provider)
+
+    def missing_api_keys(self) -> list[str]:
+        """Providers required by LLM_PROVIDER / per-agent overrides that have
+        no API key. Fallbacks are optional and skipped when unconfigured."""
+        specs = [self.llm_model, self.recon_llm_model, self.analyst_llm_model, self.pentester_llm_model]
+        needed = {parse_model_spec(s, self.llm_provider)[0] for s in specs if s}
+        return sorted(p for p in needed if not self.provider_api_key(p))
+
+    def configured_providers(self) -> list[str]:
+        """Providers that have an API key set (any number can be set at once)."""
+        return [p for p in PROVIDERS if self.provider_api_key(p)]
 
     # Search API Keys
     tavily_api_key: Optional[str] = None
@@ -174,91 +248,136 @@ def get_default_llm():
     (e.g. when running from LangGraph Studio).
     """
     global _llm_instance
-    if _llm_instance is not None:
-        return _llm_instance
-
-    config = get_config()
-
-    if config.llm_provider == "anthropic":
-        from langchain_anthropic import ChatAnthropic
-        _llm_instance = ChatAnthropic(
-            model=config.llm_model,
-            api_key=config.anthropic_api_key,
-            temperature=config.llm_temperature,
-            max_tokens=config.llm_max_tokens,
-            timeout=config.llm_timeout,
-        )
-    elif config.llm_provider == "openrouter":
-        from langchain_openai import ChatOpenAI
-        _llm_instance = ChatOpenAI(
-            model=config.llm_model,
-            api_key=config.openrouter_api_key,
-            base_url=config.openrouter_base_url,
-            temperature=config.llm_temperature,
-            max_tokens=config.llm_max_tokens,
-            timeout=config.llm_timeout,
-            max_retries=config.llm_max_retries,
-            default_headers={
-                "HTTP-Referer": "https://fennec.ai",
-                "X-Title": "Fennec AI",
-            },
-        )
-    else:
-        from langchain_openai import ChatOpenAI
-        _llm_instance = ChatOpenAI(
-            model=config.llm_model,
-            api_key=config.openai_api_key,
-            temperature=config.llm_temperature,
-            max_tokens=config.llm_max_tokens,
-            timeout=config.llm_timeout,
-            max_retries=config.llm_max_retries,
-        )
-
+    if _llm_instance is None:
+        _llm_instance = create_llm(get_config().llm_model)
     return _llm_instance
 
 
-def create_llm(model: str):
-    """Create an LLM instance for a specific model.
+def parse_model_spec(spec: str, default_provider: Optional[str] = None) -> tuple[str, str]:
+    """Split a model spec into ``(provider, model)``.
 
-    Uses the same provider/credentials as the default LLM,
-    but with a different model name. Used for per-agent model overrides.
+    ``"gemini:gemini-2.5-pro"`` -> ``("gemini", "gemini-2.5-pro")``;
+    ``"nvidia"`` -> ``("nvidia", <its default model>)``; anything else is a
+    bare model name for ``LLM_PROVIDER``. Only a known provider name counts as
+    a prefix, so OpenRouter ids like ``"mistralai/mistral-7b:free"`` stay intact.
+    """
+    spec = spec.strip()
+    if spec in PROVIDERS:
+        return spec, DEFAULT_MODELS[spec]
+    prefix, sep, rest = spec.partition(":")
+    if sep and prefix in PROVIDERS and rest:
+        return prefix, rest
+    return default_provider or get_config().llm_provider, spec
+
+
+def create_llm(spec: str):
+    """Create a chat model from a model spec (see ``parse_model_spec``).
+
+    Single factory for every provider; used for the default LLM, the CLI,
+    per-agent overrides and the fallback chain.
     """
     config = get_config()
+    provider, model = parse_model_spec(spec)
+    api_key = config.provider_api_key(provider)
 
-    if config.llm_provider == "anthropic":
+    if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
         return ChatAnthropic(
             model=model,
-            api_key=config.anthropic_api_key,
+            api_key=api_key,
             temperature=config.llm_temperature,
             max_tokens=config.llm_max_tokens,
             timeout=config.llm_timeout,
         )
-    elif config.llm_provider == "openrouter":
-        from langchain_openai import ChatOpenAI
-        return ChatOpenAI(
+    if provider == "gemini":
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        return ChatGoogleGenerativeAI(
             model=model,
-            api_key=config.openrouter_api_key,
-            base_url=config.openrouter_base_url,
+            google_api_key=api_key,
             temperature=config.llm_temperature,
-            max_tokens=config.llm_max_tokens,
+            max_output_tokens=config.llm_max_tokens,
             timeout=config.llm_timeout,
             max_retries=config.llm_max_retries,
-            default_headers={
+        )
+
+    # openai, openrouter and nvidia all speak the OpenAI chat-completions API.
+    from langchain_openai import ChatOpenAI
+    extra: dict = {}
+    if provider == "openrouter":
+        extra = {
+            "base_url": config.openrouter_base_url,
+            "default_headers": {
                 "HTTP-Referer": "https://fennec.ai",
                 "X-Title": "Fennec AI",
             },
-        )
-    else:
-        from langchain_openai import ChatOpenAI
-        return ChatOpenAI(
-            model=model,
-            api_key=config.openai_api_key,
-            temperature=config.llm_temperature,
-            max_tokens=config.llm_max_tokens,
-            timeout=config.llm_timeout,
-            max_retries=config.llm_max_retries,
-        )
+        }
+    elif provider == "nvidia":
+        extra = {"base_url": config.nvidia_base_url}
+    return ChatOpenAI(
+        model=model,
+        api_key=api_key,
+        temperature=config.llm_temperature,
+        max_tokens=config.llm_max_tokens,
+        timeout=config.llm_timeout,
+        max_retries=config.llm_max_retries,
+        **extra,
+    )
+
+
+def get_fallback_llms(max_tokens: Optional[int] = None) -> list:
+    """Chat models from ``LLM_FALLBACKS``, in order.
+
+    Entries whose provider has no API key are skipped with a warning, so a
+    half-configured chain degrades instead of crashing the run.
+    """
+    config = get_config()
+    models = []
+    for spec in filter(None, (x.strip() for x in config.llm_fallbacks.split(","))):
+        provider, _ = parse_model_spec(spec)
+        if not config.provider_api_key(provider):
+            logger.warning("Skipping LLM fallback %r: no API key for %s", spec, provider)
+            continue
+        llm = create_llm(spec)
+        models.append(with_max_tokens(llm, max_tokens) if max_tokens else llm)
+    return models
+
+
+def fallback_middleware(max_tokens: Optional[int] = None) -> list:
+    """``[ModelFallbackMiddleware]`` for ``create_agent``, or ``[]`` when no
+    fallbacks are configured. Splat it at the end of an agent's middleware."""
+    fallbacks = get_fallback_llms(max_tokens)
+    if not fallbacks:
+        return []
+    from langchain.agents.middleware import ModelFallbackMiddleware
+    return [ModelFallbackMiddleware(*fallbacks)]
+
+
+def structured_llm(llm, schema, max_tokens: int = 16384, **kwargs):
+    """``llm.with_structured_output(schema, **kwargs)`` with a raised token cap,
+    falling back through ``LLM_FALLBACKS`` if the primary call raises."""
+    primary = with_max_tokens(llm, max_tokens).with_structured_output(schema, **kwargs)
+    fallbacks = [
+        fb.with_structured_output(schema, **kwargs)
+        for fb in get_fallback_llms(max_tokens)
+    ]
+    return primary.with_fallbacks(fallbacks) if fallbacks else primary
+
+
+def with_max_tokens(llm, max_tokens: int):
+    """Return a copy of ``llm`` with a larger output-token cap.
+
+    Uses ``model_copy`` (not ``.bind()``) so the value survives
+    ``with_structured_output()`` / ToolStrategy re-binding tools. The field is
+    ``max_tokens`` on Anthropic/OpenAI but ``max_output_tokens`` on Gemini, so
+    pick whichever the model class defines. Returns ``llm`` unchanged when it
+    can't be copied (older LangChain / non-pydantic models).
+    """
+    fields = getattr(type(llm), "model_fields", {})
+    field = "max_output_tokens" if "max_output_tokens" in fields else "max_tokens"
+    try:
+        return llm.model_copy(update={field: max_tokens})
+    except Exception:  # pragma: no cover
+        return llm
 
 
 async def get_default_docker() -> dict:

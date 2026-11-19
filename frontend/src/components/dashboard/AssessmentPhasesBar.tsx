@@ -169,7 +169,7 @@ function TestingExpansionCard({ hypotheses }: { hypotheses: HypothesisResult[] }
   const categories = Array.from(categoryMap.entries());
 
   return (
-    <div className="absolute top-0 left-0 z-20 rounded-lg border border-amber-500/30 bg-fennec-dark-900 shadow-xl min-w-[340px]">
+    <div className="absolute top-0 left-0 z-20 rounded-lg border border-amber-500/30 bg-ds-elevated shadow-popover min-w-[340px]">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-fennec-dark-700">
         <AlertTriangle className="h-4 w-4 text-amber-500" />

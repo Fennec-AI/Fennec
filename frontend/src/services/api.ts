@@ -12,10 +12,46 @@ import type {
   Target,
   Credential,
   RichFinding,
+  Finding,
+  FindingFacets,
 } from '../types';
 import type { ReconData, ToolExecution } from '../types/eventLog';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
+
+export const findingsApi = {
+  list: (filters: Record<string, string> = {}) =>
+    fetchApi<Finding[]>(`/dashboard/findings?${new URLSearchParams({ ...filters, limit: '1000' })}`),
+  facets: () => fetchApi<FindingFacets>('/dashboard/findings/facets'),
+  get: (id: string) => fetchApi<Finding>(`/dashboard/findings/${encodeURIComponent(id)}`),
+  chatHistory: (id: string) =>
+    fetchApi<{ messages: Array<{ role: 'user' | 'assistant'; content: string }> }>(
+      `/findings/${encodeURIComponent(id)}/chat`),
+  chat: (id: string, message: string) =>
+    fetchApi<{ reply: string; messages: Array<{ role: 'user' | 'assistant'; content: string }> }>(
+      `/findings/${encodeURIComponent(id)}/chat`, {
+      method: 'POST', body: JSON.stringify({ message }),
+    }),
+  clearChat: (id: string) =>
+    fetchApi<{ messages: [] }>(`/findings/${encodeURIComponent(id)}/chat`, { method: 'DELETE' }),
+  importChat: (id: string, messages: Array<{ role: 'user' | 'assistant'; content: string }>) =>
+    fetchApi<{ messages: Array<{ role: 'user' | 'assistant'; content: string }> }>(
+      `/findings/${encodeURIComponent(id)}/chat/import`, {
+        method: 'POST', body: JSON.stringify({ messages }),
+      }),
+};
+
+export type ChatMessage = { role: 'user' | 'assistant'; content: string };
+export const contextChatApi = {
+  history: (scope: string, id: string) =>
+    fetchApi<{ messages: ChatMessage[] }>(`/chats/${scope}/${encodeURIComponent(id)}`),
+  send: (scope: string, id: string, message: string) =>
+    fetchApi<{ reply: string; messages: ChatMessage[] }>(`/chats/${scope}/${encodeURIComponent(id)}`, {
+      method: 'POST', body: JSON.stringify({ message }),
+    }),
+  clear: (scope: string, id: string) =>
+    fetchApi<{ messages: ChatMessage[] }>(`/chats/${scope}/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+};
 
 // Generic fetch wrapper with error handling
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -93,11 +129,15 @@ export const dashboardApi = {
 
 // Pentest API
 export const pentestApi = {
+  getJob: (jobId: string) =>
+    fetchApi<JobResponse>(`/jobs/${encodeURIComponent(jobId)}`),
+
   startTest: (request: StartTestRequest): Promise<JobResponse> =>
     fetchApi<JobResponse>('/jobs', {
       method: 'POST',
       body: JSON.stringify({
         name: request.name ?? `Assessment – ${request.target_url}`,
+        description: request.description,
         target_url: request.target_url,
         mode: request.mode ?? 'black_box',
         htli: request.htli ?? false,
@@ -105,6 +145,7 @@ export const pentestApi = {
         credential_id: request.credential_id,
         method: request.method ?? 'balanced',
         frequency: request.frequency ?? undefined,
+        timeout_seconds: request.timeout_seconds ?? 600,
       }),
     }),
 

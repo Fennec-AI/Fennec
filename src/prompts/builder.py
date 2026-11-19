@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 from .sections import (
     AUTHORIZATION,
+    get_execution_guidance,
     PERSISTENCE,
     METHODOLOGY,
     VULNERABILITY_FOCUS,
@@ -77,6 +78,7 @@ class PromptBuilder:
 
         # 2. Authorization (always)
         sections.append(AUTHORIZATION)
+        sections.append(get_execution_guidance())
 
         if self.agent_type in ["recon", "pentester"]:
             sections.append(TODO_LIST)
@@ -189,9 +191,10 @@ this is what gets shown to the user. Be specific, cite real evidence.
 
 - description: {
     overview: str                # 2-4 sentence plain-English summary of the vuln
-    breakdown: {                 # dict — fill these 4 keys exactly
+    breakdown: {                 # dict — fill these 5 keys exactly
       vuln_type: "Vertical Privilege Escalation" | "RCE" | "SQLi" | "SSRF" | etc.,
-      affected_endpoint: "GET /api/user/me",
+      affected_endpoint: "GET /api/user/me",   # full method + URL/path
+      affected_parameter: "email (JSON body)" | "id (path)" | "N/A",
       access_required: "Standard authenticated user" | "Unauthenticated" | etc.,
       exploitability: "High - single API call" | "Medium - requires X" | etc.,
     },
@@ -211,6 +214,11 @@ this is what gets shown to the user. Be specific, cite real evidence.
     ],
     payloads_used: ["/cgi-bin/.%2e/...", "{\\"admin\\": true}"],
     observed_behavior: str       # 1-2 sentences on how the app responded
+    reproduction_steps: [        # 3-6 ordered instructions; the UI adds step numbers
+      "Acesse https://target/api/login com uma conta de teste autorizada e prepare uma requisição POST com o campo email.",
+      "Envie a requisição com o payload exato registrado em payloads_used no campo email. Se houver um comando reproduzível, inclua-o aqui após explicar o que ele faz.",
+      "Confira se a resposta contém o comportamento registrado em observed_behavior; compare com a requisição normal para confirmar a diferença.",
+    ],
   }
 
 - remediation: {
@@ -220,6 +228,18 @@ this is what gets shown to the user. Be specific, cite real evidence.
   }
 
 - owasp_category: e.g. "Broken Access Control", "Injection", "SSRF"
+- cwe_id: most specific CWE, e.g. "CWE-89"
+
+Write reproduction_steps as a practical, step-by-step guide in Portuguese.
+Each item must start with an action verb (for example: "Acesse", "Envie",
+"Confira") and tell the reader WHAT to do, WHERE to do it, the exact
+request/payload/parameter when recorded, and what observation confirms the
+step. Start with access or authentication prerequisites when relevant; end
+with the observed result that proves the finding. Keep commands and payloads
+inside the relevant action, not as unexplained standalone lines. Do not
+number the strings (the UI numbers them). Use only the actual test evidence:
+if a command, credential, or expected response was not recorded, say what
+is missing rather than inventing it.
 
 ═══════════════════════════════════════════════════════════════════════════════
 RULES

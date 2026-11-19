@@ -158,6 +158,13 @@ class HypothesisManager:
             self._handle_needs_info(hypothesis, result)
         elif result.status == "dead_end":
             self._handle_dead_end(hypothesis, result)
+        elif result.status == "refused":
+            hypothesis.status = HypothesisStatus.REFUSED
+            hypothesis.completed_at = datetime.now(timezone.utc)
+            hypothesis.refusal_reason = result.error or "Agent declined to perform the test"
+            hypothesis.termination_reason = hypothesis.refusal_reason
+            for output in hypothesis.expected_outputs:
+                self.pending_outputs.pop(output, None)
 
         # Add new hypotheses as children
         for new_hyp_data in result.new_hypotheses:
@@ -179,6 +186,13 @@ class HypothesisManager:
         """Handle a completed hypothesis result."""
         hypothesis.status = HypothesisStatus.COMPLETED
         hypothesis.completed_at = datetime.now(timezone.utc)
+        unfinished = [t for t in hypothesis.tasks if t.get("status") != "completed"]
+        if unfinished:
+            hypothesis.status = HypothesisStatus.INCOMPLETE
+            hypothesis.termination_reason = (
+                f"Agent returned a final result with {len(unfinished)} unfinished task(s): "
+                + "; ".join(str(t.get("content", "Unnamed task")) for t in unfinished)
+            )
 
         if result.result:
             hypothesis.result = HypothesisResult(result.result)
@@ -244,6 +258,9 @@ class HypothesisManager:
         """Handle a hypothesis that cannot proceed."""
         hypothesis.status = HypothesisStatus.DEAD_END
         hypothesis.completed_at = datetime.now(timezone.utc)
+        hypothesis.termination_reason = result.error or "; ".join(result.internal_steps or result.findings) or (
+            "Agent ended the investigation without reporting a reason."
+        )
 
         logger.info(f"Hypothesis {hypothesis.id} is a dead end: {result.error}")
 
@@ -408,8 +425,10 @@ class HypothesisManager:
             "pending": sum(1 for h in hypotheses if h.status == HypothesisStatus.PENDING),
             "in_progress": sum(1 for h in hypotheses if h.status == HypothesisStatus.IN_PROGRESS),
             "completed": sum(1 for h in hypotheses if h.status == HypothesisStatus.COMPLETED),
+            "incomplete": sum(1 for h in hypotheses if h.status == HypothesisStatus.INCOMPLETE),
             "blocked": sum(1 for h in hypotheses if h.status == HypothesisStatus.BLOCKED),
             "dead_end": sum(1 for h in hypotheses if h.status == HypothesisStatus.DEAD_END),
+            "refused": sum(1 for h in hypotheses if h.status == HypothesisStatus.REFUSED),
             "vulnerabilities": sum(1 for h in hypotheses if h.result == HypothesisResult.VULNERABLE),
             "queue_size": len(self.pending_queue),
             "blocked_count": len(self.blocked_list),

@@ -28,10 +28,14 @@ try:
     from ..middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from ..middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from ..middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
+    from ..config.settings import fallback_middleware, with_max_tokens
+    from ..prompts.sections import get_execution_guidance
 except ImportError:
     from src.middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from src.middleware.finalizeBeforeModelLimitMiddleware import FinalizeBeforeModelLimitMiddleware
     from src.middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
+    from src.config.settings import fallback_middleware, with_max_tokens
+    from src.prompts.sections import get_execution_guidance
 
 try:
     from ..state import FennecState, ReconData, CorrelationStore
@@ -202,6 +206,8 @@ Findings: {pending_result.get('findings', [])}
 You are an expert security analyst for authorized penetration testing.
 QUALITY HYPOTHESES lead to QUALITY FINDINGS - be specific and actionable.
 
+{get_execution_guidance()}
+
 ## TARGET
 {target_url}
 {recon_section}
@@ -300,6 +306,10 @@ def _process_pending_result(
         needs=pending_result.get("needs", []),
         error=pending_result.get("error"),
     )
+
+    # The manager must see the final todo list before deciding completion.
+    if pending_result.get("tasks") is not None:
+        hyp.tasks = pending_result["tasks"]
 
     # Delegate to manager: updates status, result, severity, outputs_registry,
     # and unblocks any hypotheses waiting on this one's outputs.
@@ -448,10 +458,7 @@ async def analyst_node(
     # run after recon. Same root cause as recon/pentester extraction
     # truncation. model_copy mutates the underlying field so it persists
     # through ToolStrategy's tool re-binding.
-    try:
-        llm = llm.model_copy(update={"max_tokens": 16384})
-    except Exception:  # pragma: no cover - older LC / non-pydantic models
-        pass
+    llm = with_max_tokens(llm, 16384)
     agent = create_agent(
         model=llm,
         tools=tools,
@@ -462,6 +469,7 @@ async def analyst_node(
             BudgetAwarePromptMiddleware(run_limit=analyst_call_limit),
             FinalizeBeforeModelLimitMiddleware(run_limit=analyst_call_limit, buffer=3, structured_tool_name="AnalystResult"),
             ModelCallLimitMiddleware(run_limit=analyst_call_limit, exit_behavior="end"),
+            *fallback_middleware(16384),
         ],
         response_format=ToolStrategy(AnalystResult),
         name="analyst",

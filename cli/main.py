@@ -275,40 +275,8 @@ async def run_pentest(target_url: str, output_dir: Path, verbose: bool = True, s
 
     # Initialize LLM
     print("Initializing LLM...")
-    if config.llm_provider == "anthropic":
-        from langchain_anthropic import ChatAnthropic
-        llm = ChatAnthropic(
-            model=config.llm_model,
-            api_key=config.anthropic_api_key,
-            temperature=config.llm_temperature,
-            max_tokens=config.llm_max_tokens,
-            timeout=config.llm_timeout,
-        )
-    elif config.llm_provider == "openrouter":
-        from langchain_openai import ChatOpenAI
-        llm = ChatOpenAI(
-            model=config.llm_model,
-            api_key=config.openrouter_api_key,
-            base_url=config.openrouter_base_url,
-            temperature=config.llm_temperature,
-            max_tokens=config.llm_max_tokens,
-            timeout=config.llm_timeout,
-            max_retries=config.llm_max_retries,
-            default_headers={
-                "HTTP-Referer": "https://fennec.ai",
-                "X-Title": "Fennec AI",
-            },
-        )
-    else:
-        from langchain_openai import ChatOpenAI
-        llm = ChatOpenAI(
-            model=config.llm_model,
-            api_key=config.openai_api_key,
-            temperature=config.llm_temperature,
-            max_tokens=config.llm_max_tokens,
-            timeout=config.llm_timeout,
-            max_retries=config.llm_max_retries,
-        )
+    from src.config.settings import create_llm
+    llm = create_llm(config.llm_model)
 
     # Create container
     print("Creating Kali Linux container...")

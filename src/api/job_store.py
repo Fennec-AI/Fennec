@@ -4,8 +4,9 @@ Jobs are keyed by UUID. Each job carries its inputs, current status,
 the streaming event log, and the final agent outputs (recon, hypotheses,
 pentester results) as they're produced.
 
-No persistence across server restarts — by design. The paid SaaS uses
-Postgres; the OSS distribution is single-user and ephemeral.
+Dashboard state is process-local by default. When FENNEC_DATA_DIR is set,
+the API snapshots this state to JSON across restarts. Finding chat uses
+separate local SQLite storage.
 """
 
 from __future__ import annotations

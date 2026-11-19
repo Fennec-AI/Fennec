@@ -40,3 +40,6 @@ Thumbs.db
 .claude/
 
 test_analyst/
+
+# Local finding chat database
+data/

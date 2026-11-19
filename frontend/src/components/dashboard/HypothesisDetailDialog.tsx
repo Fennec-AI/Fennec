@@ -14,8 +14,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn, getHypothesisDisplayStatus } from '@/lib/utils';
 import type { HypothesisResult } from '@/types';
+import ContextChat from '@/components/chat/ContextChat';
 import {
   FlaskConical,
   Target,
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react';
 
 interface HypothesisDetailDialogProps {
+  assessmentId: string;
   hypothesis: HypothesisResult | null;
   isOpen: boolean;
   onClose: () => void;
@@ -35,6 +37,7 @@ interface HypothesisDetailDialogProps {
 }
 
 export function HypothesisDetailDialog({
+                                         assessmentId,
                                          hypothesis,
                                          isOpen,
                                          onClose,
@@ -58,6 +61,11 @@ export function HypothesisDetailDialog({
       icon: <CheckCircle2 className="h-3 w-3 mr-1" />,
       label: 'COMPLETED',
     },
+    incomplete: {
+      color: 'text-orange-400 bg-orange-600/20 border-orange-500/30',
+      icon: <AlertTriangle className="h-3 w-3 mr-1" />,
+      label: 'ENCERRADA COM PENDÊNCIAS',
+    },
     blocked: {
       color: 'text-fennec-orange-400 bg-fennec-orange-600/20 border-fennec-orange-500/30',
       icon: <AlertTriangle className="h-3 w-3 mr-1" />,
@@ -68,13 +76,18 @@ export function HypothesisDetailDialog({
       icon: <XCircle className="h-3 w-3 mr-1" />,
       label: 'DEAD END',
     },
+    refused: {
+      color: 'text-orange-400 bg-orange-600/20 border-orange-500/30',
+      icon: <XCircle className="h-3 w-3 mr-1" />,
+      label: 'REFUSED',
+    },
   };
 
   const severityColors: Record<string, string> = {
     critical: 'bg-red-600/20 text-red-400 border-red-600/30',
     high: 'bg-orange-600/20 text-orange-400 border-orange-600/30',
     medium: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30',
-    low: 'bg-blue-600/20 text-blue-400 border-blue-600/30',
+    low: 'bg-green-600/20 text-green-400 border-green-600/30',
     info: 'bg-fennec-dark-600 text-fennec-dark-300 border-fennec-dark-600/30',
   };
 
@@ -94,7 +107,7 @@ export function HypothesisDetailDialog({
   };
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return 'Not started';
+    if (!dateStr) return 'Sem registro';
     const date = new Date(dateStr);
     return date.toLocaleString('en-US', {
       month: 'short',
@@ -105,7 +118,8 @@ export function HypothesisDetailDialog({
     });
   };
 
-  const currentStatus = statusConfig[hypothesis.status];
+  const displayStatus = getHypothesisDisplayStatus(hypothesis);
+  const currentStatus = statusConfig[displayStatus];
   const hypothesisTasks = hypothesis.tasks ?? [];
 
   return (
@@ -114,7 +128,7 @@ export function HypothesisDetailDialog({
           <DialogHeader>
             <div className="flex items-start justify-between gap-4 pb-4">
               <div className="flex-1 space-y-3">
-                <DialogTitle className="text-2xl text-white flex items-center gap-3">
+                <DialogTitle className="text-[15px] font-semibold text-ds-fg flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-fennec-purple-600/20 border border-fennec-purple-500/30">
                     <FlaskConical className="h-5 w-5 text-fennec-purple-400" />
                   </div>
@@ -148,7 +162,7 @@ export function HypothesisDetailDialog({
           </DialogHeader>
 
           <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4 bg-fennec-dark-800/50">
+            <TabsList className="grid w-full grid-cols-5 bg-fennec-dark-800/50">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="tasks">
                 Tasks {hypothesisTasks.length > 0 && <span className="ml-1 text-xs">({hypothesisTasks.length})</span>}
@@ -157,11 +171,32 @@ export function HypothesisDetailDialog({
                 Findings {hypothesis.findings && <span className="ml-1 text-xs">({hypothesis.findings.length})</span>}
               </TabsTrigger>
               <TabsTrigger value="data">Data I/O</TabsTrigger>
+              <TabsTrigger value="chat">Chat IA</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="chat" className="mt-6">
+              <ContextChat scope="hypothesis" contextId={`${assessmentId}:${hypothesis.id}`} title="Converse sobre esta hipótese" />
+            </TabsContent>
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6 mt-6">
               {/* Blocking Info - Show at top if blocked */}
+              {displayStatus === 'incomplete' && (
+                <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-300 whitespace-pre-wrap">
+                  A execução foi encerrada com {(hypothesis.tasks ?? []).filter(task => task.status !== 'completed').length} tarefa(s) sem conclusão registrada. Os achados foram preservados.
+                  {hypothesis.termination_reason && <p className="mt-2">{hypothesis.termination_reason}</p>}
+                </div>
+              )}
+              {hypothesis.status === 'refused' && (
+                <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-300">
+                  Agent refused this test: {hypothesis.refusal_reason || 'No reason provided.'}
+                </div>
+              )}
+              {hypothesis.status === 'dead_end' && (
+                <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-300 whitespace-pre-wrap">
+                  Motivo do encerramento: {hypothesis.termination_reason || 'O motivo não foi registrado nesta execução.'}
+                </div>
+              )}
               {hypothesis.blocked_by && (
                   <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
                     <div className="flex items-center gap-2 text-orange-400 font-medium mb-2">
@@ -178,7 +213,7 @@ export function HypothesisDetailDialog({
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg bg-fennec-dark-800/30 border border-fennec-dark-700">
                   <div className="text-xs text-fennec-dark-500 mb-1">Priority Score</div>
-                  <div className="text-2xl font-bold text-white">{Number(hypothesis.priority).toFixed(2)}</div>
+                  <div className="font-mono text-lg font-semibold tabular-nums text-ds-fg">{Number(hypothesis.priority).toFixed(2)}</div>
                 </div>
                 <div className="p-4 rounded-lg bg-fennec-dark-800/30 border border-fennec-dark-700">
                   <div className="text-xs text-fennec-dark-500 mb-1">Required Agent</div>
@@ -189,7 +224,7 @@ export function HypothesisDetailDialog({
                 </div>
                 <div className="p-4 rounded-lg bg-fennec-dark-800/30 border border-fennec-dark-700">
                   <div className="text-xs text-fennec-dark-500 mb-1">Result</div>
-                  <div className="text-sm font-medium text-white mt-1">{hypothesis.result || 'Pending evaluation'}</div>
+                  <div className="text-sm font-medium text-white mt-1">{hypothesis.status === 'refused' ? 'Refused' : hypothesis.result || 'Pending evaluation'}</div>
                 </div>
                 <div className="p-4 rounded-lg bg-fennec-dark-800/30 border border-fennec-dark-700">
                   <div className="text-xs text-fennec-dark-500 mb-1">Hypothesis ID</div>

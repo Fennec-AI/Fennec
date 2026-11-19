@@ -74,7 +74,7 @@ export interface HypothesisResult {
     id: string;
     title: string;
     description?: string;
-    status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'dead_end';
+    status: 'pending' | 'in_progress' | 'completed' | 'incomplete' | 'blocked' | 'dead_end' | 'refused';
     result: 'vulnerable' | 'safe' | 'inconclusive' | null;
     severity: 'critical' | 'high' | 'medium' | 'low' | 'info' | null;
     priority: number | string;
@@ -93,6 +93,8 @@ export interface HypothesisResult {
     created_at: string;
     started_at: string | null;
     completed_at: string | null;
+    refusal_reason?: string | null;
+    termination_reason?: string | null;
     color?: string;
 }
 
@@ -149,6 +151,37 @@ export interface FindingDetail {
   hypothesis_id: string | null;
   discovered_at: string;
   discovered_by: string;
+}
+
+export interface Finding extends Omit<FindingDetail, 'evidence' | 'status'> {
+  status: string;
+  evidence: string[];
+  target_id: string | null;
+  target_url: string;
+  host: string;
+  job_name: string;
+  job_created_at: string;
+  description_overview?: string | null;
+  description_breakdown?: Record<string, string> | null;
+  description_technical?: string | null;
+  hypothesis_description?: string | null;
+  impact_demonstrated?: string | null;
+  impact_attack_scenarios?: string | null;
+  impact_business_risk?: string | null;
+  evidence_logged?: Array<{ request: string; response: string }> | null;
+  evidence_payloads?: string[] | null;
+  evidence_observed?: string | null;
+  remediation_primary?: string | null;
+  remediation_implementation?: string | null;
+  remediation_hardening?: string | null;
+  owasp_category?: string | null;
+  commands_executed?: Array<Record<string, unknown>>;
+}
+
+export interface FindingFacets {
+  hosts: Array<{ value: string; count: number }>;
+  severities: Array<{ value: string; count: number }>;
+  scans: Array<{ value: string; label: string; count: number }>;
 }
 
 // Rich finding with MindFort-style tabs (extends FindingDetail for pentester results)
@@ -221,6 +254,7 @@ export interface StartTestRequest {
   credential_id?: string;
   method?: 'turbo' | 'balanced' | 'deep';
   frequency?: 'daily' | 'weekly' | 'monthly' | null;
+  timeout_seconds?: number;
 }
 
 export interface JobResponse {

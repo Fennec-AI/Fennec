@@ -8,6 +8,38 @@ export default {
     theme: {
     	extend: {
     		colors: {
+    			/* Claudin surfaces and text, as a scale. 950 = canvas, 100 = primary text. */
+    			'fennec-dark': {
+    				'100': '#f3f4f6',
+    				'200': '#c8c8d0',
+    				'300': '#c8c8d0',
+    				'400': '#8b8b95',
+    				'500': '#8b8b95',
+    				'600': '#34373e',
+    				'700': '#2a2d33',
+    				'800': '#1f2125',
+    				'900': '#1a1c1f',
+    				'950': '#101114'
+    			},
+    			/* Claudin tokens by name */
+    			ds: {
+    				bg: '#101114',
+    				elevated: '#1f2125',
+    				sunken: '#1a1c1f',
+    				panel: '#2a2d33',
+    				'panel-hover': '#34373e',
+    				'border-strong': 'rgba(243, 244, 246, 0.22)',
+    				fg: '#f3f4f6',
+    				'fg-muted': '#c8c8d0',
+    				tertiary: '#8b8b95',
+    				quaternary: '#6b6b75',
+    				'accent-soft': 'rgba(243, 244, 246, 0.06)',
+    				ok: '#10b981',
+    				warn: '#f59e0b',
+    				danger: '#ef4444',
+    				info: '#60a5fa',
+    				violet: '#a78bfa'
+    			},
     			'fennec-light': {
     				'50': '#fafafa',
     				'100': '#f5f5f5',
@@ -22,6 +54,8 @@ export default {
     				'950': '#0a0a0a'
     			},
     			'fennec-lime': {
+    				/* Terminal prompt and cursor: Claudin `ok` */
+    				DEFAULT: '#10b981',
     				'50': '#f7fee7',
     				'100': '#ecfccb',
     				'200': '#d9f99d',
@@ -159,12 +193,20 @@ export default {
     		fontFamily: {
     			sans: [
     				'Inter',
+    				'ui-sans-serif',
     				'system-ui',
+    				'-apple-system',
+    				'BlinkMacSystemFont',
+    				'Segoe UI',
     				'sans-serif'
     			],
     			mono: [
-    				'JetBrains Mono',
+    				'Caskaydia Cove Nerd Font Mono',
+    				'Cascadia Mono',
+    				'Cascadia Code',
+    				'ui-monospace',
     				'Consolas',
+    				'Courier New',
     				'monospace'
     			]
     		},
@@ -182,8 +224,8 @@ export default {
     				'50%': { 'background-position': '100% 50%' }
     			},
     			'pulse-border': {
-    				'0%, 100%': { 'border-color': 'rgba(139, 92, 246, 0.3)' },
-    				'50%': { 'border-color': 'rgba(139, 92, 246, 0.7)' }
+    				'0%, 100%': { 'border-color': 'rgba(243, 244, 246, 0.12)' },
+    				'50%': { 'border-color': 'rgba(243, 244, 246, 0.22)' }
     			},
     			'accordion-down': {
     				from: { height: '0' },
@@ -194,10 +236,23 @@ export default {
     				to: { height: '0' }
     			}
     		},
+    		/* Claudin radii: xs 3, sm 4, md 8, popover 12, lg 14 */
     		borderRadius: {
+    			xs: '3px',
+    			sm: '3px',
+    			md: '4px',
     			lg: 'var(--radius)',
-    			md: 'calc(var(--radius) - 2px)',
-    			sm: 'calc(var(--radius) - 4px)'
+    			xl: 'var(--radius)',
+    			'2xl': '12px',
+    			'3xl': '14px'
+    		},
+    		boxShadow: {
+    			popover: '0 14px 30px rgba(0, 0, 0, 0.28)'
+    		},
+    		height: {
+    			control: '24px',
+    			row: '26px',
+    			titlebar: '32px'
     		}
     	}
     },

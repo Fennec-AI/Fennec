@@ -52,7 +52,7 @@ class AgentResult:
     """
 
     # === Status ===
-    status: Literal["completed", "needs_info", "dead_end"]
+    status: Literal["completed", "needs_info", "dead_end", "refused"]
 
     # === Result (only if status == "completed") ===
     # Whether a vulnerability was found

@@ -17,6 +17,9 @@ const pageTitles: Record<string, string> = {
     '/dashboard/chats': 'Chats',
     '/dashboard/monitor': 'Event Monitor',
     '/dashboard/settings': 'Settings',
+    '/dashboard/status': 'Status',
+    '/dashboard/findings': 'Findings',
+    '/dashboard/targets': 'Target Inventory',
 };
 
 export function SiteHeader({ onRefresh, isRefreshing }: SiteHeaderProps) {
@@ -24,30 +27,34 @@ export function SiteHeader({ onRefresh, isRefreshing }: SiteHeaderProps) {
 
     // Match the most specific path first
     const title =
-        Object.entries(pageTitles).find(([path]) =>
+        Object.entries(pageTitles)
+            .sort(([a], [b]) => b.length - a.length)
+            .find(([path]) =>
             location.pathname === path || location.pathname.startsWith(path + '/')
         )?.[1] ?? 'Dashboard';
 
     return (
-        <header className="flex h-[calc(var(--spacing)*12)] shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-[calc(var(--spacing)*12)]">
-            <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-                <SidebarTrigger className="-ml-1" />
+        // Claudin titlebar: 32px, bg-elevated, crumbs "fennec / <page>", actions on the right.
+        <header className="sticky top-0 z-10 flex h-titlebar shrink-0 items-center border-b bg-ds-elevated select-none">
+            <div className="flex w-full min-w-0 items-center gap-[7px] pl-2 pr-2">
+                <SidebarTrigger className="h-6 w-6 text-ds-tertiary hover:text-ds-fg" />
                 <Separator
                     orientation="vertical"
-                    className="mx-2 data-[orientation=vertical]:h-4"
+                    className="mx-1 data-[orientation=vertical]:h-3.5"
                 />
-                <h1 className="text-base font-medium">{title}</h1>
+                <span className="text-xs font-semibold tracking-[0.02em] text-ds-fg">fennec</span>
+                <span className="text-ds-quaternary">/</span>
+                <h1 className="min-w-0 truncate text-xs font-normal text-ds-fg-muted">{title}</h1>
 
                 {onRefresh && (
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ml-auto flex items-center gap-1.5">
                         <Button
-                            variant="ghost"
                             size="sm"
                             onClick={onRefresh}
                             disabled={isRefreshing}
                         >
                             <RefreshCw
-                                className={cn('h-4 w-4', isRefreshing && 'animate-spin')}
+                                className={cn('h-3 w-3', isRefreshing && 'animate-spin')}
                             />
                             <span className="hidden sm:inline">Refresh</span>
                         </Button>

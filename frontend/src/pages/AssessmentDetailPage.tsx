@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useMemo, useEffect, useRef } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ExternalLink,
@@ -29,12 +29,14 @@ import {
   ReconPanel,
 } from '@/components/panels';
 import { AssessmentPhasesBar } from '@/components/dashboard/AssessmentPhasesBar';
+import { TestDialog } from '@/components/dashboard/TestDialogBox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { RichFinding, HypothesisResult, ToolExecutionEvent } from '@/types';
 import type { ReconState } from '@/hooks/usePentestStream';
+import ContextChat from '@/components/chat/ContextChat';
 
 /* ---- Status helpers ---- */
 
@@ -72,7 +74,7 @@ const severityColors: Record<string, string> = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
   high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  low: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  low: 'bg-green-500/20 text-green-400 border-green-500/30',
   info: 'bg-fennec-dark-600/20 text-fennec-dark-300 border-fennec-dark-600/30',
 };
 
@@ -107,6 +109,7 @@ function determinePhase(
 
 export default function AssessmentDetailPage() {
   const { testId } = useParams<{ testId: string }>();
+  const [retryOpen, setRetryOpen] = useState(false);
   const navigate = useNavigate();
   const toolCallsEndRef = useRef<HTMLDivElement>(null);
 
@@ -170,17 +173,17 @@ export default function AssessmentDetailPage() {
         ...h,
         id: (h as unknown as { hypothesis_id?: string }).hypothesis_id || String(h.id),
         status: h.status as HypothesisResult['status'],
-        result: null,
-        severity: null,
-        parent_id: null,
-        children_ids: [],
+        result: h.result ?? null,
+        severity: h.severity ?? null,
+        parent_id: h.parent_id ?? null,
+        children_ids: h.children_ids ?? [],
         priority: h.priority ?? 'medium',
         required_agent: h.required_agent ?? 'pentester',
         skills: h.skills ?? [],
         owasp_category: h.owasp_category ?? undefined,
         created_at: h.created_at ?? '',
-        started_at: null,
-        completed_at: null,
+        started_at: h.started_at ?? null,
+        completed_at: h.completed_at ?? null,
       };
       return [mapped.id, mapped];
     }));
@@ -307,7 +310,7 @@ export default function AssessmentDetailPage() {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold">{test.title || 'Security Assessment'}</h1>
+              <h1 className="text-[15px] leading-5 font-semibold tracking-[0.01em]">{test.title || 'Security Assessment'}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <a
                   href={test.target_url}
@@ -325,25 +328,30 @@ export default function AssessmentDetailPage() {
                 {isActiveStream && <LiveIndicator />}
               </div>
             </div>
-            {isRunning && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={async () => {
-                  try {
-                    const { dashboardApi } = await import('@/services/api');
-                    await dashboardApi.cancelJob(testId!);
-                    window.location.reload();
-                  } catch {
-                    // silently ignore
-                  }
-                }}
-              >
-                <XCircle className="mr-1.5 h-3.5 w-3.5" />
-                Cancel
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setRetryOpen(true)}>
+                Refazer
               </Button>
-            )}
+              {isRunning && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={async () => {
+                    try {
+                      const { dashboardApi } = await import('@/services/api');
+                      await dashboardApi.cancelJob(testId!);
+                      window.location.reload();
+                    } catch {
+                      // silently ignore
+                    }
+                  }}
+                >
+                  <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                  Cancel
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -353,6 +361,7 @@ export default function AssessmentDetailPage() {
         {/* Tabbed Content */}
         <Tabs defaultValue="activity" className="w-full">
           <TabsList className="w-full justify-start">
+            <TabsTrigger value="chat">Chat IA</TabsTrigger>
             <TabsTrigger value="activity" className="gap-1.5">
               <Activity className="h-3.5 w-3.5" />
               Live Activity
@@ -380,6 +389,10 @@ export default function AssessmentDetailPage() {
               )}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="chat">
+            <ContextChat scope="assessment" contextId={testId || ''} title="Converse sobre este assessment" />
+          </TabsContent>
 
           {/* Live Activity Tab */}
           <TabsContent value="activity">
@@ -437,6 +450,7 @@ export default function AssessmentDetailPage() {
               </Card>
             ) : (
               <HypothesesPanel
+                assessmentId={testId || ''}
                 hypotheses={hypothesesRecord}
                 currentHypothesisId={streamHypotheses.currentHypothesisId}
                 statistics={streamHypotheses.statistics}
@@ -489,7 +503,7 @@ export default function AssessmentDetailPage() {
                         key={finding.id}
                         type="button"
                         onClick={() =>
-                          navigate(`/dashboard/findings?finding_id=${finding.id}`)
+                          navigate(`/dashboard/findings?job_id=${encodeURIComponent(testId || '')}&hypothesis_id=${encodeURIComponent(String(finding.hypothesis_id ?? ''))}`)
                         }
                         className="flex w-full items-start gap-3 rounded-lg border border-border/50 bg-fennec-dark-900 p-3 text-left transition-colors hover:bg-fennec-dark-800 hover:border-border"
                       >
@@ -518,6 +532,7 @@ export default function AssessmentDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+      <TestDialog open={retryOpen} onOpenChange={setRetryOpen} prefillJobId={testId} />
     </DashboardLayout>
   );
 }

@@ -5,7 +5,7 @@
  * Click to open full detail dialog.
  */
 
-import { cn } from '@/lib/utils';
+import { cn, getHypothesisDisplayStatus } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { HypothesisResult, Task, StepRecord } from '@/types';
 import {
@@ -37,10 +37,11 @@ export function HypothesisCard({
   }
   const statusColors: Record<string, string> = {
     pending: 'border-fennec-dark-600 bg-fennec-dark-900/30',
-    in_progress: 'border-fennec-purple-500 shadow-fennec-purple-500/20 shadow-lg bg-fennec-purple-900/10',
+    in_progress: 'border-ds-border-strong bg-ds-panel',
     completed: 'border-fennec-green-600 bg-fennec-green-900/10',
     blocked: 'border-fennec-orange-500 bg-fennec-orange-900/10',
     dead_end: 'border-fennec-dark-500 bg-fennec-dark-900/20',
+    refused: 'border-orange-500 bg-orange-900/10',
   };
 
   const statusIcons: Record<string, React.ReactNode> = {
@@ -49,13 +50,14 @@ export function HypothesisCard({
     completed: <CheckCircle2 className="h-5 w-5 text-fennec-green-400" />,
     blocked: <AlertTriangle className="h-5 w-5 text-fennec-orange-400" />,
     dead_end: <AlertTriangle className="h-5 w-5 text-fennec-dark-500" />,
+    refused: <AlertTriangle className="h-5 w-5 text-orange-400" />,
   };
 
   const severityColors: Record<string, string> = {
     critical: 'bg-red-600/20 text-red-400 border-red-600/30',
     high: 'bg-orange-600/20 text-orange-400 border-orange-600/30',
     medium: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30',
-    low: 'bg-blue-600/20 text-blue-400 border-blue-600/30',
+    low: 'bg-green-600/20 text-green-400 border-green-600/30',
     info: 'bg-fennec-dark-600 text-fennec-dark-300 border-fennec-dark-600/30',
   };
 
@@ -70,9 +72,9 @@ export function HypothesisCard({
   return (
     <div
       className={cn(
-        'rounded-lg border-2 transition-all cursor-pointer hover:scale-[1.02] hover:shadow-xl group',
-        statusColors[hypothesis.status] || statusColors.pending,
-        isActive && 'ring-2 ring-fennec-purple-400/50',
+        'rounded-lg border cursor-pointer hover:border-ds-border-strong group',
+        getHypothesisDisplayStatus(hypothesis) === 'incomplete' ? statusColors.refused : statusColors[hypothesis.status] || statusColors.pending,
+        isActive && 'ring-2 ring-ds-border-strong',
         // Add left border color based on hypothesis.color
         hypothesis.color && `border-l-4`,
       )}
@@ -86,7 +88,7 @@ export function HypothesisCard({
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             {/* Status Icon */}
-            {statusIcons[hypothesis.status] || statusIcons.pending}
+            {getHypothesisDisplayStatus(hypothesis) === 'incomplete' ? statusIcons.refused : statusIcons[hypothesis.status] || statusIcons.pending}
 
             {/* Title & ID */}
             <div className="flex-1 min-w-0">
@@ -101,6 +103,7 @@ export function HypothesisCard({
 
           {/* Badges */}
           <div className="flex flex-col gap-1 flex-shrink-0">
+            {getHypothesisDisplayStatus(hypothesis) === 'incomplete' && <Badge variant="outline" className="text-orange-400 border-orange-500/30">Com pendências</Badge>}
             {hypothesis.severity && (
               <Badge className={cn("text-xs border", severityColors[hypothesis.severity])}>
                 {hypothesis.severity.toUpperCase()}
@@ -146,7 +149,7 @@ export function HypothesisCard({
               <span>
                 {completedTasks}/{totalTasks} tasks
               </span>
-              <span className="text-fennec-dark-600">({progressPercent}%)</span>
+              <span className="text-fennec-dark-500">({progressPercent}%)</span>
             </div>
           )}
 

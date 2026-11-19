@@ -107,7 +107,7 @@ def _build_fake_recon_history(tool_call_count: int = 15) -> list:
 
 
 async def run() -> int:
-    if not any(os.getenv(k) for k in ("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY")):
+    if not any(os.getenv(k) for k in ("OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY")):
         print("SKIP: no LLM API keys in env")
         return 0
 

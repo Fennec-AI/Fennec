@@ -64,7 +64,7 @@ export function getSeverityColor(severity: Severity): string {
     critical: 'text-fennec-red-400',
     high: 'text-fennec-orange-400',
     medium: 'text-fennec-yellow-400',
-    low: 'text-fennec-blue-400',
+    low: 'text-green-400',
     info: 'text-fennec-dark-300',
   };
   return colors[severity] || colors.info;
@@ -76,7 +76,7 @@ export function getSeverityBgColor(severity: Severity): string {
     critical: 'bg-fennec-red-600/20',
     high: 'bg-fennec-orange-600/20',
     medium: 'bg-fennec-yellow-600/20',
-    low: 'bg-fennec-blue-600/20',
+    low: 'bg-green-600/20',
     info: 'bg-fennec-dark-600/20',
   };
   return colors[severity] || colors.info;
@@ -121,7 +121,14 @@ export function getStatusBadgeClass(status: TestStatus): string {
 }
 
 // Hypothesis status type
-export type HypothesisStatus = 'pending' | 'in_progress' | 'completed' | 'blocked' | 'dead_end';
+export type HypothesisStatus = 'pending' | 'in_progress' | 'completed' | 'incomplete' | 'blocked' | 'dead_end' | 'refused';
+
+export function getHypothesisDisplayStatus(hypothesis: {
+  status: HypothesisStatus; tasks?: Array<{ status: string }>;
+}): HypothesisStatus {
+  return hypothesis.status === 'completed' && hypothesis.tasks?.some(task => task.status !== 'completed')
+    ? 'incomplete' : hypothesis.status;
+}
 
 // Get hypothesis status badge class
 export function getHypothesisStatusBadgeClass(status: HypothesisStatus): string {
@@ -129,8 +136,10 @@ export function getHypothesisStatusBadgeClass(status: HypothesisStatus): string 
     pending: 'bg-fennec-dark-600/40 text-fennec-dark-300',
     in_progress: 'bg-fennec-purple-600/20 text-fennec-purple-400',
     completed: 'bg-fennec-green-600/20 text-fennec-green-400',
+    incomplete: 'bg-orange-600/20 text-orange-400',
     blocked: 'bg-fennec-orange-600/20 text-fennec-orange-400',
     dead_end: 'bg-fennec-dark-700 text-fennec-dark-400',
+    refused: 'bg-orange-600/20 text-orange-400',
   };
   return classes[status] || classes.pending;
 }
@@ -140,7 +149,7 @@ export const CHART_COLORS = {
   critical: '#ef4444',
   high: '#f97316',
   medium: '#eab308',
-  low: '#3b82f6',
+  low: '#22c55e',
   info: '#6b7280',
   safe: '#22c55e',
 };

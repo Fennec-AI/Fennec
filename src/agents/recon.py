@@ -46,6 +46,7 @@ try:
     )
     from ..middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from ..middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
+    from ..config.settings import fallback_middleware, structured_llm, with_max_tokens
 except ImportError:
     from src.state import FennecState, ReconData
     from src.state.recon import (
@@ -67,6 +68,7 @@ except ImportError:
     )
     from src.middleware.budget_aware_prompt import BudgetAwarePromptMiddleware
     from src.middleware.truncate_tool_outputs import TruncateOldToolOutputsMiddleware
+    from src.config.settings import fallback_middleware, structured_llm, with_max_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -122,11 +124,8 @@ async def _extract_recon_result(llm, messages: list) -> "ReconResult | None":
     #
     # include_raw=True so we can log WHY extraction failed if it ever does
     # again — finish_reason / tool_calls count / preview all logged.
-    try:
-        big_llm = llm.model_copy(update={"max_tokens": 16384})
-    except Exception:  # pragma: no cover - older LC / non-pydantic models
-        big_llm = llm
-    extractor = big_llm.with_structured_output(
+    extractor = structured_llm(
+        llm,
         ReconResult,
         method="function_calling",
         include_raw=True,
@@ -524,10 +523,7 @@ async def recon_node(
     # and the rescue extractor has to retry. model_copy mutates the
     # underlying field so it persists through ToolStrategy's tool re-binding
     # (.bind() kwargs would be dropped).
-    try:
-        llm = llm.model_copy(update={"max_tokens": 16384})
-    except Exception:  # pragma: no cover - older LC / non-pydantic models
-        pass
+    llm = with_max_tokens(llm, 16384)
     agent = create_agent(
         model=llm,
         tools=tools,
@@ -539,6 +535,7 @@ async def recon_node(
             BudgetAwarePromptMiddleware(run_limit=model_call_budget),
             FinalizeBeforeModelLimitMiddleware(run_limit=model_call_budget, buffer=3, structured_tool_name="ReconResult"),
             ModelCallLimitMiddleware(run_limit=model_call_budget, exit_behavior="end"),
+            *fallback_middleware(16384),
         ],
         response_format=ToolStrategy(ReconResult),
         name="recon",
