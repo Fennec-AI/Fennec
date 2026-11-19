@@ -5,6 +5,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { getHypothesisDisplayStatus } from '@/lib/utils';
 import {
   Collapsible,
   CollapsibleContent,
@@ -63,7 +64,7 @@ export function HypothesesPanel({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHypothesis, setSelectedHypothesis] = useState<string | null>(null);
 
-  const hypothesesArray = Object.values(hypotheses);
+  const hypothesesArray = Object.values(hypotheses).map(h => ({ ...h, status: getHypothesisDisplayStatus(h) }));
   const hasHypotheses = hypothesesArray.length > 0;
   const currentHypothesis = currentHypothesisId ? hypotheses[currentHypothesisId] : null;
 
@@ -121,7 +122,7 @@ export function HypothesesPanel({
       case 'priority':
         return sorted.sort((a, b) => Number(b.priority) - Number(a.priority));
       case 'status': {
-        const statusOrder = ['in_progress', 'pending', 'blocked', 'completed', 'refused', 'dead_end'];
+        const statusOrder = ['in_progress', 'pending', 'blocked', 'incomplete', 'completed', 'refused', 'dead_end'];
         return sorted.sort((a, b) => statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status));
       }
       case 'recent':

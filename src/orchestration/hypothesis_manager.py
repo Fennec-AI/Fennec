@@ -186,6 +186,13 @@ class HypothesisManager:
         """Handle a completed hypothesis result."""
         hypothesis.status = HypothesisStatus.COMPLETED
         hypothesis.completed_at = datetime.now(timezone.utc)
+        unfinished = [t for t in hypothesis.tasks if t.get("status") != "completed"]
+        if unfinished:
+            hypothesis.status = HypothesisStatus.INCOMPLETE
+            hypothesis.termination_reason = (
+                f"Agent returned a final result with {len(unfinished)} unfinished task(s): "
+                + "; ".join(str(t.get("content", "Unnamed task")) for t in unfinished)
+            )
 
         if result.result:
             hypothesis.result = HypothesisResult(result.result)
@@ -418,6 +425,7 @@ class HypothesisManager:
             "pending": sum(1 for h in hypotheses if h.status == HypothesisStatus.PENDING),
             "in_progress": sum(1 for h in hypotheses if h.status == HypothesisStatus.IN_PROGRESS),
             "completed": sum(1 for h in hypotheses if h.status == HypothesisStatus.COMPLETED),
+            "incomplete": sum(1 for h in hypotheses if h.status == HypothesisStatus.INCOMPLETE),
             "blocked": sum(1 for h in hypotheses if h.status == HypothesisStatus.BLOCKED),
             "dead_end": sum(1 for h in hypotheses if h.status == HypothesisStatus.DEAD_END),
             "refused": sum(1 for h in hypotheses if h.status == HypothesisStatus.REFUSED),

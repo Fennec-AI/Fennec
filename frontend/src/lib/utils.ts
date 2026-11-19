@@ -121,7 +121,14 @@ export function getStatusBadgeClass(status: TestStatus): string {
 }
 
 // Hypothesis status type
-export type HypothesisStatus = 'pending' | 'in_progress' | 'completed' | 'blocked' | 'dead_end' | 'refused';
+export type HypothesisStatus = 'pending' | 'in_progress' | 'completed' | 'incomplete' | 'blocked' | 'dead_end' | 'refused';
+
+export function getHypothesisDisplayStatus(hypothesis: {
+  status: HypothesisStatus; tasks?: Array<{ status: string }>;
+}): HypothesisStatus {
+  return hypothesis.status === 'completed' && hypothesis.tasks?.some(task => task.status !== 'completed')
+    ? 'incomplete' : hypothesis.status;
+}
 
 // Get hypothesis status badge class
 export function getHypothesisStatusBadgeClass(status: HypothesisStatus): string {
@@ -129,6 +136,7 @@ export function getHypothesisStatusBadgeClass(status: HypothesisStatus): string 
     pending: 'bg-fennec-dark-600/40 text-fennec-dark-300',
     in_progress: 'bg-fennec-purple-600/20 text-fennec-purple-400',
     completed: 'bg-fennec-green-600/20 text-fennec-green-400',
+    incomplete: 'bg-orange-600/20 text-orange-400',
     blocked: 'bg-fennec-orange-600/20 text-fennec-orange-400',
     dead_end: 'bg-fennec-dark-700 text-fennec-dark-400',
     refused: 'bg-orange-600/20 text-orange-400',

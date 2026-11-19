@@ -921,7 +921,11 @@ def _context_chat_data(scope: str, context_id: str) -> dict:
         if scope == "assessment" and not hypothesis_id:
             return {"hypotheses": [
                 {"id": h.get("id"), "title": h.get("title"),
-                 "status": h.get("status"), "result": h.get("result"),
+                 "status": ("incomplete" if h.get("status") == "completed" and any(
+                     t.get("status") != "completed" for t in h.get("tasks", [])
+                 ) else h.get("status")), "result": h.get("result"),
+                 "unfinished_tasks": [t.get("content") for t in h.get("tasks", [])
+                                      if t.get("status") != "completed"],
                  "refusal_reason": h.get("refusal_reason"),
                  "termination_reason": h.get("termination_reason") or h.get("error")}
                 for h in job.hypotheses[:100]], **base}

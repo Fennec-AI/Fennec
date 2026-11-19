@@ -5,7 +5,7 @@
  * Click to open full detail dialog.
  */
 
-import { cn } from '@/lib/utils';
+import { cn, getHypothesisDisplayStatus } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { HypothesisResult, Task, StepRecord } from '@/types';
 import {
@@ -73,7 +73,7 @@ export function HypothesisCard({
     <div
       className={cn(
         'rounded-lg border cursor-pointer hover:border-ds-border-strong group',
-        statusColors[hypothesis.status] || statusColors.pending,
+        getHypothesisDisplayStatus(hypothesis) === 'incomplete' ? statusColors.refused : statusColors[hypothesis.status] || statusColors.pending,
         isActive && 'ring-2 ring-ds-border-strong',
         // Add left border color based on hypothesis.color
         hypothesis.color && `border-l-4`,
@@ -88,7 +88,7 @@ export function HypothesisCard({
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             {/* Status Icon */}
-            {statusIcons[hypothesis.status] || statusIcons.pending}
+            {getHypothesisDisplayStatus(hypothesis) === 'incomplete' ? statusIcons.refused : statusIcons[hypothesis.status] || statusIcons.pending}
 
             {/* Title & ID */}
             <div className="flex-1 min-w-0">
@@ -103,6 +103,7 @@ export function HypothesisCard({
 
           {/* Badges */}
           <div className="flex flex-col gap-1 flex-shrink-0">
+            {getHypothesisDisplayStatus(hypothesis) === 'incomplete' && <Badge variant="outline" className="text-orange-400 border-orange-500/30">Com pendências</Badge>}
             {hypothesis.severity && (
               <Badge className={cn("text-xs border", severityColors[hypothesis.severity])}>
                 {hypothesis.severity.toUpperCase()}

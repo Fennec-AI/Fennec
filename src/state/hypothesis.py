@@ -17,6 +17,7 @@ class HypothesisStatus(str, Enum):
     PENDING = "pending"           # Waiting to be processed
     IN_PROGRESS = "in_progress"   # Currently being explored
     COMPLETED = "completed"       # Exploration finished
+    INCOMPLETE = "incomplete"     # Agent finished with unfinished tasks
     BLOCKED = "blocked"           # Waiting for another hypothesis
     DEAD_END = "dead_end"         # Cannot be explored further
     REFUSED = "refused"           # Agent explicitly declined the test

@@ -307,6 +307,10 @@ def _process_pending_result(
         error=pending_result.get("error"),
     )
 
+    # The manager must see the final todo list before deciding completion.
+    if pending_result.get("tasks") is not None:
+        hyp.tasks = pending_result["tasks"]
+
     # Delegate to manager: updates status, result, severity, outputs_registry,
     # and unblocks any hypotheses waiting on this one's outputs.
     manager.current_hypothesis_id = current_hypothesis_id

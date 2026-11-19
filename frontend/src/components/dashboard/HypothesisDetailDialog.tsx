@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn, getHypothesisDisplayStatus } from '@/lib/utils';
 import type { HypothesisResult } from '@/types';
 import ContextChat from '@/components/chat/ContextChat';
 import {
@@ -60,6 +60,11 @@ export function HypothesisDetailDialog({
       color: 'text-fennec-green-400 bg-fennec-green-600/20 border-fennec-green-500/30',
       icon: <CheckCircle2 className="h-3 w-3 mr-1" />,
       label: 'COMPLETED',
+    },
+    incomplete: {
+      color: 'text-orange-400 bg-orange-600/20 border-orange-500/30',
+      icon: <AlertTriangle className="h-3 w-3 mr-1" />,
+      label: 'ENCERRADA COM PENDÊNCIAS',
     },
     blocked: {
       color: 'text-fennec-orange-400 bg-fennec-orange-600/20 border-fennec-orange-500/30',
@@ -113,7 +118,8 @@ export function HypothesisDetailDialog({
     });
   };
 
-  const currentStatus = statusConfig[hypothesis.status];
+  const displayStatus = getHypothesisDisplayStatus(hypothesis);
+  const currentStatus = statusConfig[displayStatus];
   const hypothesisTasks = hypothesis.tasks ?? [];
 
   return (
@@ -175,6 +181,12 @@ export function HypothesisDetailDialog({
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6 mt-6">
               {/* Blocking Info - Show at top if blocked */}
+              {displayStatus === 'incomplete' && (
+                <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-300 whitespace-pre-wrap">
+                  A execução foi encerrada com {(hypothesis.tasks ?? []).filter(task => task.status !== 'completed').length} tarefa(s) sem conclusão registrada. Os achados foram preservados.
+                  {hypothesis.termination_reason && <p className="mt-2">{hypothesis.termination_reason}</p>}
+                </div>
+              )}
               {hypothesis.status === 'refused' && (
                 <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm text-orange-300">
                   Agent refused this test: {hypothesis.refusal_reason || 'No reason provided.'}
